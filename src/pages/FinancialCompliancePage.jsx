@@ -67,6 +67,7 @@ const FinancialCompliancePage = () => {
       <div>
         <h2 className="text-xl font-bold text-slate-800 tracking-tight">Financial Compliance & Auditing</h2>
         <p className="text-xs text-slate-400 mt-0.5">Monitor legal tax processing frameworks, structural corporate VAT, and local TDS ledgers.</p>
+        <p className="text-xs text-slate-400 mt-1">Data as of: {new Intl.DateTimeFormat('en', { month: 'long' }).format(new Date())} {new Date().getFullYear()}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

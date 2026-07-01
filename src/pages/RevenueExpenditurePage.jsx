@@ -1,134 +1,165 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { financialRecordsAPI } from '../services/api';
 
-const RevenueExpenditurePage = () => {
-  const [data, setData] = useState({
-    recurringBilled: 0,
-    outstandingBilled: 0,
-    receivedTillDate: 0,
-    budgetedExpenditure: 0,
-    actualExpenditure: 0,
-  });
+const monthOptions = [
+  { value: 1, label: 'January' },
+  { value: 2, label: 'February' },
+  { value: 3, label: 'March' },
+  { value: 4, label: 'April' },
+  { value: 5, label: 'May' },
+  { value: 6, label: 'June' },
+  { value: 7, label: 'July' },
+  { value: 8, label: 'August' },
+  { value: 9, label: 'September' },
+  { value: 10, label: 'October' },
+  { value: 11, label: 'November' },
+  { value: 12, label: 'December' },
+];
 
-  const [loading, setLoading] = useState(true);
+const RevenueExpenditurePage = () => {
+  const currentYear = 2026;
+  const now = new Date();
+  const defaultMonth = now.getMonth() + 1;
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value || 0));
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchReport = async () => {
       try {
         setLoading(true);
-        const records = await financialRecordsAPI.getSummary();
-        
-        let recurringBilled = 0;
-        let outstandingBilled = 0;
-        let receivedTillDate = 0;
-        let budgetedExpenditure = 0;
-        let actualExpenditure = 0;
-
-        // Sum across all records
-        records.forEach(r => {
-          recurringBilled += (r.revenueBilledRecurringMonthly || 0);
-          outstandingBilled += (r.revenueTillEndOutstandingCash || 0) + (r.revenueBilledOutstandingCash || 0);
-          receivedTillDate += (r.revenueBilledReceivedCash || 0) + (r.revenueBilledReceivedBank || 0) + (r.revenueTillEndReceivedCash || 0);
-          budgetedExpenditure += (r.expenditureBudgetedCash || 0);
-          actualExpenditure += (r.expenditureActualCash || 0);
-        });
-
-        setData({
-          recurringBilled,
-          outstandingBilled,
-          receivedTillDate,
-          budgetedExpenditure,
-          actualExpenditure
-        });
-      } catch (err) {
-        console.error('Failed to fetch summary', err);
+        setError('');
+        const data = await financialRecordsAPI.getExecutiveReport(
+          String(selectedMonth).padStart(2, '0'),
+          String(currentYear),
+        );
+        setReport(data);
+      } catch (fetchError) {
+        console.error('Failed to load executive report:', fetchError);
+        setError(fetchError.message || 'Failed to load executive report');
+        setReport(null);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
 
-  const totalReceivables = data.recurringBilled + data.outstandingBilled;
-  const receivableOutstanding = totalReceivables - data.receivedTillDate;
-  const expenditureVariance = data.budgetedExpenditure - data.actualExpenditure;
+    fetchReport();
+  }, [selectedMonth]);
 
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-IN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Math.abs(val));
+  const metrics = report?.metrics || {
+    recurringMonthlyRevenueBilled: 0,
+    outstandingRevenueBilled: 0,
+    totalReceivables: 0,
+    receivableReceivedTillDate: 0,
+    receivableOutstandingTillDate: 0,
   };
+
+  const receivableCoverage = useMemo(() => {
+    const lifetimeInvoiced = report?.raw?.totalLifetimeInvoiced || 0;
+    if (!lifetimeInvoiced) return 0;
+    return (metrics.receivableReceivedTillDate / lifetimeInvoiced) * 100;
+  }, [metrics, report]);
 
   return (
     <div className="space-y-6">
-      {/* Page Title */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-800 tracking-tight">Revenue & Expenditure Overview</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Track recurring streams, outstanding billing, and operating variances.</p>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 tracking-tight">Falcon Executive View</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Monthly revenue and accounts receivable performance calculated from saved data.</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-700 shadow-sm outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all cursor-pointer"
+            >
+              {monthOptions.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label} {currentYear}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 text-xs">▼</div>
+          </div>
+        </div>
       </div>
 
-      {/* Main Executive Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* 1. REVENUE SUMMARY CARD */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-xs relative">
-          <div className="absolute top-4 right-4 text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded font-mono">Statement 01</div>
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <span>📊</span> 1. Revenue Summary
-          </h3>
-          
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center text-xs text-slate-600">
-              <span>Recurring Monthly Revenue Billed</span>
-              <span className="font-mono font-bold text-slate-900">৳ {formatCurrency(data.recurringBilled)}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-slate-600">
-              <span>Outstanding Revenue Billed</span>
-              <span className="font-mono font-bold text-slate-900">৳ {formatCurrency(data.outstandingBilled)}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-              <span className="text-slate-700">Total Receivables</span>
-              <span className="font-mono text-rose-500">৳ {formatCurrency(totalReceivables)}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-slate-600 pt-1">
-              <span>Receivable Received Till Date</span>
-              <span className="font-mono font-bold text-emerald-600">৳ {formatCurrency(data.receivedTillDate)}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-slate-600">
-              <span>Receivable Outstanding Till Date</span>
-              <span className={`font-mono font-bold ${receivableOutstanding < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-                {receivableOutstanding < 0 ? '- ' : ''}৳ {formatCurrency(Math.abs(receivableOutstanding))}
-              </span>
-            </div>
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Recurring Monthly Revenue Billed</div>
+          <div className="mt-2 text-2xl font-black text-slate-900">৳ {formatCurrency(metrics.recurringMonthlyRevenueBilled)}</div>
+          <p className="mt-2 text-xs text-slate-400">Sum of active recurring contract fees invoiced in the selected billing cycle.</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Outstanding Revenue Billed</div>
+          <div className="mt-2 text-2xl font-black text-amber-600">৳ {formatCurrency(metrics.outstandingRevenueBilled)}</div>
+          <p className="mt-2 text-xs text-slate-400">Billed this month minus payments received for this month's invoices.</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Receivables</div>
+          <div className="mt-2 text-2xl font-black text-rose-500">৳ {formatCurrency(metrics.totalReceivables)}</div>
+          <p className="mt-2 text-xs text-slate-400">Unpaid invoices including current month and overdue balances.</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Receivable Received Till Date</div>
+          <div className="mt-2 text-2xl font-black text-emerald-600">৳ {formatCurrency(metrics.receivableReceivedTillDate)}</div>
+          <p className="mt-2 text-xs text-slate-400">Lifetime payments collected from day one up to the selected month.</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Receivable Outstanding Till Date</div>
+          <div className="mt-2 text-2xl font-black text-slate-900">৳ {formatCurrency(metrics.receivableOutstandingTillDate)}</div>
+          <p className="mt-2 text-xs text-slate-400">Lifetime invoiced amount minus total lifetime received.</p>
+        </div>
+
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm text-white">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Collection Coverage</div>
+          <div className="mt-2 text-2xl font-black text-amber-400">{formatCurrency(receivableCoverage)}%</div>
+          <p className="mt-2 text-xs text-slate-400">How much of billed receivables have been collected so far.</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Monthly Report</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              {monthOptions.find((month) => month.value === selectedMonth)?.label} {currentYear}
+            </p>
+          </div>
+          <div className="text-xs text-slate-400">
+            {loading ? 'Refreshing report...' : `Records used: ${report?.raw?.recordCount || 0}`}
           </div>
         </div>
 
-        {/* 2. EXPENDITURE SUMMARY CARD */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-xs">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <span>📉</span> 2. Expenditure Summary
-          </h3>
-          
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center text-xs text-slate-600">
-              <span>Budgeted Expenditure</span>
-              <span className="font-mono font-bold text-slate-900">৳ {formatCurrency(data.budgetedExpenditure)}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-slate-600">
-              <span>Actual Expenditure (Till Date)</span>
-              <span className="font-mono font-bold text-slate-900">৳ {formatCurrency(data.actualExpenditure)}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-              <span className="text-slate-700">Total Expenditure Variance (+/-)</span>
-              <span className={`font-mono ${expenditureVariance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {expenditureVariance >= 0 ? '+ ' : '- '}৳ {formatCurrency(Math.abs(expenditureVariance))}
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400 text-right italic pt-4">Values formatted in BDT currency layer.</p>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider">Formula used for RMR Billed</div>
+            <div className="mt-2 text-slate-700">Active recurring contract fees invoiced in the current billing cycle.</div>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider">Formula used for Receivable Outstanding</div>
+            <div className="mt-2 text-slate-700">Lifetime invoiced amount minus lifetime collections.</div>
           </div>
         </div>
-
       </div>
     </div>
   );

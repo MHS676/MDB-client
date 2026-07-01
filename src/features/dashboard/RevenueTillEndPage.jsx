@@ -3,17 +3,19 @@ import { financialRecordsAPI } from '../../services/api';
 
 const RevenueTillEndPage = () => {
   const currentYear = 2026;
-  const [selectedMonth, setSelectedMonth] = useState(5); // Default to June
+  const now = new Date();
+  const defaultMonth = now.getMonth() + 1;
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const monthsList = [
-    { value: 0, name: 'January' }, { value: 1, name: 'February' },
-    { value: 2, name: 'March' }, { value: 3, name: 'April' },
-    { value: 4, name: 'May' }, { value: 5, name: 'June' },
-    { value: 6, name: 'July' }, { value: 7, name: 'August' },
-    { value: 8, name: 'September' }, { value: 9, name: 'October' },
-    { value: 10, name: 'November' }, { value: 11, name: 'December' },
+    { value: 1, name: 'January' }, { value: 2, name: 'February' },
+    { value: 3, name: 'March' }, { value: 4, name: 'April' },
+    { value: 5, name: 'May' }, { value: 6, name: 'June' },
+    { value: 7, name: 'July' }, { value: 8, name: 'August' },
+    { value: 9, name: 'September' }, { value: 10, name: 'October' },
+    { value: 11, name: 'November' }, { value: 12, name: 'December' },
   ];
 
   const [receivedTillDate, setReceivedTillDate] = useState('');
@@ -24,10 +26,10 @@ const RevenueTillEndPage = () => {
       try {
         setLoading(true);
         const data = await financialRecordsAPI.getPeriod(
-          String(selectedMonth + 1).padStart(2, '0'),
+          String(selectedMonth).padStart(2, '0'),
           String(currentYear)
         );
-        const totalDays = new Date(currentYear, selectedMonth + 1, 0).getDate();
+        const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
         const initialValues = Array.from({ length: totalDays }, () => '');
 
         if (data) {
@@ -41,7 +43,7 @@ const RevenueTillEndPage = () => {
         setDayValues(initialValues);
       } catch (err) {
         console.error('Error fetching period data:', err);
-        const totalDays = new Date(currentYear, selectedMonth + 1, 0).getDate();
+        const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
         setDayValues(Array.from({ length: totalDays }, () => ''));
       } finally {
         setLoading(false);
@@ -69,7 +71,7 @@ const RevenueTillEndPage = () => {
       setError('');
 
       const payload = {
-        month: String(selectedMonth + 1).padStart(2, '0'),
+        month: String(selectedMonth).padStart(2, '0'),
         year: String(currentYear),
         revenueTillEndReceivedCash: parseFloat(receivedTillDate) || 0,
         revenueTillEndOutstandingCash: dayValues.reduce((sum, val) => sum + (parseFloat(val) || 0), 0),

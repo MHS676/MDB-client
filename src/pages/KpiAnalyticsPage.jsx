@@ -96,6 +96,7 @@ const KpiAnalyticsPage = () => {
       <div>
         <h2 className="text-xl font-bold text-slate-800 tracking-tight">Key Performance Indicators</h2>
         <p className="text-xs text-slate-400 mt-0.5">High-level enterprise analysis, growth charts, ratios, and executive margins.</p>
+        <p className="text-xs text-slate-400 mt-1">Data as of: {new Intl.DateTimeFormat('en', { month: 'long' }).format(new Date())} {new Date().getFullYear()}</p>
       </div>
 
       {/* Ratio Card */}

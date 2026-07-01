@@ -38,7 +38,12 @@ const apiCall = async (endpoint, method = 'GET', data = null) => {
       throw new Error(error.message || 'API request failed');
     }
 
-    return await response.json();
+    const payload = await response.json();
+    // Backend wraps responses as { success: true, data: ... }
+    if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
+      return payload.data;
+    }
+    return payload;
   } catch (error) {
     console.error('API Error:', error);
     throw error;
@@ -51,6 +56,8 @@ export const financialRecordsAPI = {
   getPeriod: (month, year) =>
     apiCall(`/financial-records/period?month=${month}&year=${year}`, 'GET'),
   getSummary: () => apiCall('/financial-records/summary', 'GET'),
+  getExecutiveReport: (month, year) =>
+    apiCall(`/financial-records/executive-report?month=${month}&year=${year}`, 'GET'),
 };
 
 // Mock login - generates a simple token for testing

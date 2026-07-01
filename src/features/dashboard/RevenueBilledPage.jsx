@@ -2,21 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { financialRecordsAPI } from '../../services/api';
 
 const RevenueBilledPage = () => {
-  const currentYear = 2026; 
-  const [selectedMonth, setSelectedMonth] = useState(5); // Default to June
+  const currentYear = 2026;
+  const now = new Date();
+  const defaultMonth = now.getMonth() + 1; // 1..12
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const monthsList = [
-    { value: 0, name: 'January' }, { value: 1, name: 'February' },
-    { value: 2, name: 'March' }, { value: 3, name: 'April' },
-    { value: 4, name: 'May' }, { value: 5, name: 'June' },
-    { value: 6, name: 'July' }, { value: 7, name: 'August' },
-    { value: 8, name: 'September' }, { value: 9, name: 'October' },
-    { value: 10, name: 'November' }, { value: 11, name: 'December' },
+    { value: 1, name: 'January' }, { value: 2, name: 'February' },
+    { value: 3, name: 'March' }, { value: 4, name: 'April' },
+    { value: 5, name: 'May' }, { value: 6, name: 'June' },
+    { value: 7, name: 'July' }, { value: 8, name: 'August' },
+    { value: 9, name: 'September' }, { value: 10, name: 'October' },
+    { value: 11, name: 'November' }, { value: 12, name: 'December' },
   ];
 
-  const [formData, setFormData] = useState({ recurringMonthly: '' });
+  const [formData, setFormData] = useState({ recurringMonthly: '', outstandingBilled: '' });
   const [rows, setRows] = useState([]);
 
   // Recalculate day rows when month changes and fetch data
@@ -25,27 +27,33 @@ const RevenueBilledPage = () => {
       try {
         setLoading(true);
         const data = await financialRecordsAPI.getPeriod(
-          String(selectedMonth + 1).padStart(2, '0'),
+          String(selectedMonth).padStart(2, '0'),
           String(currentYear)
         );
-        const totalDays = new Date(currentYear, selectedMonth + 1, 0).getDate();
+        const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
         const initialRows = Array.from({ length: totalDays }, () => ({ cash: '', bank: '' }));
 
         if (data) {
-          setFormData({ recurringMonthly: data.revenueBilledRecurringMonthly || '' });
-          if (data.revenueBilledReceivedCash || data.revenueBilledReceivedBank) {
+          const recurring = data.revenueBilledRecurringMonthly ?? '';
+          const outstandingTotal = (Number(data.revenueBilledOutstandingCash ?? 0) + Number(data.revenueBilledOutstandingBank ?? 0));
+          setFormData({
+            recurringMonthly: String(recurring),
+            outstandingBilled: outstandingTotal ? String(outstandingTotal) : ''
+          });
+          // If there were received amounts, populate day 1 with them (keep as strings for controlled inputs)
+          if ((data.revenueBilledReceivedCash ?? 0) !== 0 || (data.revenueBilledReceivedBank ?? 0) !== 0) {
             initialRows[0] = {
-              cash: data.revenueBilledReceivedCash || '',
-              bank: data.revenueBilledReceivedBank || ''
+              cash: String(data.revenueBilledReceivedCash ?? ''),
+              bank: String(data.revenueBilledReceivedBank ?? '')
             };
           }
         } else {
-          setFormData({ recurringMonthly: '' });
+          setFormData({ recurringMonthly: '', outstandingBilled: '' });
         }
         setRows(initialRows);
-      } catch (err) {
+        } catch (err) {
         console.error('Error fetching period data:', err);
-        const totalDays = new Date(currentYear, selectedMonth + 1, 0).getDate();
+        const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
         setRows(Array.from({ length: totalDays }, () => ({ cash: '', bank: '' })));
       } finally {
         setLoading(false);
@@ -62,8 +70,8 @@ const RevenueBilledPage = () => {
   };
 
   const handleReset = () => {
-    setFormData({ recurringMonthly: '' });
-    const totalDays = new Date(currentYear, selectedMonth + 1, 0).getDate();
+    setFormData({ recurringMonthly: '', outstandingBilled: '' });
+    const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
     setRows(Array.from({ length: totalDays }, () => ({ cash: '', bank: '' })));
     setError('');
   };
@@ -74,9 +82,12 @@ const RevenueBilledPage = () => {
       setError('');
 
       const payload = {
-        month: String(selectedMonth + 1).padStart(2, '0'),
+        month: String(selectedMonth).padStart(2, '0'),
         year: String(currentYear),
         revenueBilledRecurringMonthly: parseFloat(formData.recurringMonthly) || 0,
+        revenueBilledOutstandingCash: parseFloat(formData.outstandingBilled) || 0,
+        // split outstanding into bank/cash not captured separately in UI — put total into cash and keep bank 0
+        revenueBilledOutstandingBank: 0,
         revenueBilledReceivedCash: rows.reduce((sum, r) => sum + (parseFloat(r.cash) || 0), 0),
         revenueBilledReceivedBank: rows.reduce((sum, r) => sum + (parseFloat(r.bank) || 0), 0),
       };
@@ -144,7 +155,7 @@ const RevenueBilledPage = () => {
           <input
             type="number"
             value={formData.outstandingBilled}
-            onChange={(e) => setFormData({ ...formData, recurringMonthly: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, outstandingBilled: e.target.value })}
             className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none text-slate-800 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             placeholder="0.00"
           />
