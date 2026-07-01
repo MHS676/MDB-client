@@ -85,7 +85,7 @@ const RevenueExpenditurePage = () => {
             </div>
             <div className="flex justify-between items-center text-xs text-slate-600">
               <span>Outstanding Revenue Billed</span>
-              <span className="font-mono font-bold text-amber-600">৳ {formatCurrency(data.outstandingBilled)}</span>
+              <span className="font-mono font-bold text-slate-900">৳ {formatCurrency(data.outstandingBilled)}</span>
             </div>
             <div className="flex justify-between items-center text-xs font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <span className="text-slate-700">Total Receivables</span>

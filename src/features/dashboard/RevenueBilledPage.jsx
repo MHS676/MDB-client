@@ -135,8 +135,24 @@ const RevenueBilledPage = () => {
         </div>
       </div>
 
+            <div className="bg-white rounded-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] p-4 flex items-center justify-between">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          Outstanding Revenue Billed ({monthsList[selectedMonth].name})
+        </label>
+        <div className="relative w-64">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">৳</span>
+          <input
+            type="number"
+            value={formData.outstandingBilled}
+            onChange={(e) => setFormData({ ...formData, recurringMonthly: e.target.value })}
+            className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none text-slate-800 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
       {/* Responsive One-Page Grid Workspace */}
-      <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] p-4">
+      {/* <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] p-4">
                   <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Outstanding Revenue Billed</h2>
 
         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 h-full content-start">
@@ -145,12 +161,10 @@ const RevenueBilledPage = () => {
               key={i} 
               className="bg-slate-50/60 rounded-lg p-2 border border-slate-100 flex flex-col justify-between hover:bg-white hover:border-emerald-200 hover:shadow-md hover:shadow-slate-100 transition-all duration-150"
             >
-              {/* Day Badge */}
               <div className="text-[10px] font-mono font-bold text-slate-400 mb-1">
                 Day {String(i + 1).padStart(2, '0')}
               </div>
               
-              {/* Ultra-compact nested stack inputs */}
               <div className="space-y-1">
                 <input
                   type="number"
@@ -170,7 +184,7 @@ const RevenueBilledPage = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Simplified Flat Actions Footer */}
       <div className="flex justify-end gap-3 items-center pt-1">
