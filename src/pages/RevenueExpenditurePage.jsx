@@ -157,7 +157,7 @@ const RevenueExpenditurePage = () => {
           </div>
           <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider">Formula used for Receivable Outstanding</div>
-            <div className="mt-2 text-slate-700">Lifetime invoiced amount minus lifetime collections.</div>
+            <div className="mt-2 text-slate-700">Total receivables minus receivable outstanding equals receivable received till date.</div>
           </div>
         </div>
       </div>

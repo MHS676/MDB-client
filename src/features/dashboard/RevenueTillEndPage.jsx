@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { financialRecordsAPI } from '../../services/api';
 
 const RevenueTillEndPage = () => {
@@ -21,6 +21,40 @@ const RevenueTillEndPage = () => {
   const [receivedTillDate, setReceivedTillDate] = useState('');
   const [dayValues, setDayValues] = useState([]);
 
+  const toDayValueArray = (breakdown, days) => {
+    const values = Array.from({ length: days }, () => '0');
+
+    if (Array.isArray(breakdown)) {
+      breakdown.forEach((entry, index) => {
+        if (entry && typeof entry === 'object') {
+          const dayNumber = Number(entry.day);
+          const value = entry.value ?? entry.amount ?? entry.total ?? 0;
+          if (dayNumber >= 1 && dayNumber <= days) {
+            values[dayNumber - 1] = String(Number(value) || 0);
+          } else if (index < days) {
+            values[index] = String(Number(value) || 0);
+          }
+        } else if (index < days) {
+          values[index] = String(Number(entry) || 0);
+        }
+      });
+      return values;
+    }
+
+    if (breakdown && typeof breakdown === 'object') {
+      Object.keys(breakdown).forEach((key) => {
+        const dayNumber = Number(key);
+        if (dayNumber >= 1 && dayNumber <= days) {
+          const entry = breakdown[key];
+          const value = entry && typeof entry === 'object' ? (entry.value ?? entry.amount ?? entry.total ?? 0) : entry;
+          values[dayNumber - 1] = String(Number(value) || 0);
+        }
+      });
+    }
+
+    return values;
+  };
+
   useEffect(() => {
     const fetchPeriodData = async () => {
       try {
@@ -30,21 +64,29 @@ const RevenueTillEndPage = () => {
           String(currentYear)
         );
         const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
-        const initialValues = Array.from({ length: totalDays }, () => '');
 
         if (data) {
-          setReceivedTillDate(data.revenueTillEndReceivedCash || '');
-          if (data.revenueTillEndOutstandingCash) {
-            initialValues[0] = data.revenueTillEndOutstandingCash;
-          }
+          setReceivedTillDate(String(data.revenueTillEndReceivedCash ?? 0));
+          const breakdownValues = toDayValueArray(data.revenueTillEndDailyBreakdown, totalDays);
+          const hasBreakdown = Array.isArray(data.revenueTillEndDailyBreakdown)
+            ? data.revenueTillEndDailyBreakdown.length > 0
+            : data.revenueTillEndDailyBreakdown && typeof data.revenueTillEndDailyBreakdown === 'object'
+              ? Object.keys(data.revenueTillEndDailyBreakdown).length > 0
+              : false;
+
+          setDayValues(
+            hasBreakdown
+              ? breakdownValues
+              : Array.from({ length: totalDays }, () => '0')
+          );
         } else {
-          setReceivedTillDate('');
+          setReceivedTillDate('0');
+          setDayValues(Array.from({ length: totalDays }, () => '0'));
         }
-        setDayValues(initialValues);
       } catch (err) {
         console.error('Error fetching period data:', err);
         const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
-        setDayValues(Array.from({ length: totalDays }, () => ''));
+        setDayValues(Array.from({ length: totalDays }, () => '0'));
       } finally {
         setLoading(false);
       }
@@ -60,26 +102,33 @@ const RevenueTillEndPage = () => {
   };
 
   const handleReset = () => {
-    setReceivedTillDate('');
-    setDayValues(dayValues.map(() => ''));
+    setReceivedTillDate('0');
+    setDayValues(dayValues.map(() => '0'));
     setError('');
   };
+
+  const outstandingTillDateTotal = dayValues.reduce((sum, currentValue) => sum + (parseFloat(currentValue) || 0), 0);
 
   const handleSave = async () => {
     try {
       setLoading(true);
       setError('');
 
+      const dailyBreakdown = dayValues.map((value, index) => ({
+        day: index + 1,
+        value: Number(value) || 0,
+      }));
+
       const payload = {
         month: String(selectedMonth).padStart(2, '0'),
         year: String(currentYear),
         revenueTillEndReceivedCash: parseFloat(receivedTillDate) || 0,
-        revenueTillEndOutstandingCash: dayValues.reduce((sum, val) => sum + (parseFloat(val) || 0), 0),
+        revenueTillEndOutstandingCash: outstandingTillDateTotal,
+        revenueTillEndDailyBreakdown: dailyBreakdown,
       };
 
       await financialRecordsAPI.save(payload);
       alert('✓ Revenue Till End records saved successfully!');
-      handleReset();
     } catch (err) {
       console.error('Error saving revenue till end data:', err);
       setError(err.message || 'Failed to save revenue till end data');
@@ -140,16 +189,28 @@ const RevenueTillEndPage = () => {
         </div>
 
         {/* Ledger Balance Sheet - Constrained to prevent overflow layout flexes */}
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        <div className="bg-slate-50/50 rounded-xl border border-slate-100/80 px-4 py-2 flex items-center justify-between shrink-0">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Receivable Outstanding Till Date
           </span>
+          <div className="relative w-56">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">৳</span>
+            <input
+              type="number"
+                value={outstandingTillDateTotal.toFixed(2)}
+                readOnly
+                className="w-full bg-white border border-slate-200 rounded-lg pl-7 pr-3 py-1 text-xs font-bold text-slate-800"
+            />
+          </div>
+        </div>
+
         <div className="flex-1 min-h-0 grid grid-cols-2 gap-x-8 items-stretch">
           
           {/* Left Split Side */}
           <div className="flex flex-col min-h-0 border-r border-slate-100 pr-4">
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pb-1.5 mb-1 border-b border-slate-50">
               <span>Date Tag</span>
-              <span>Outstanding Ledger Value</span>
+              <span>Outstanding Value</span>
             </div>
             <div className="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-none">
               {leftColumnDays.map((value, idx) => (
@@ -176,7 +237,7 @@ const RevenueTillEndPage = () => {
           <div className="flex flex-col min-h-0 pl-4">
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pb-1.5 mb-1 border-b border-slate-50">
               <span>Date Tag</span>
-              <span>Outstanding Ledger Value</span>
+              <span>Outstanding Value</span>
             </div>
             <div className="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-none">
               {rightColumnDays.map((value, idx) => {
@@ -194,9 +255,9 @@ const RevenueTillEndPage = () => {
                         onChange={(e) => handleInputChange(globalIndex, e.target.value)}
                         className="w-full bg-white border border-slate-200 rounded-md pl-6 pr-2 py-0.5 text-xs outline-none focus:border-emerald-500 transition-all font-semibold text-slate-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
-                    />
+                      />
+                    </div>
                   </div>
-                </div>
                 );
               })}
             </div>

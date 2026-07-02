@@ -114,7 +114,6 @@ const LoginPage = ({ onLoginSuccess }) => {
             Demo Access — Use User: <span className="text-slate-400 font-mono">yusuf@mdb.com</span> & Pass: <span className="text-slate-400 font-mono">admin123</span>
           </p>
         </div>
-
       </div>
     </div>
   );

@@ -34,11 +34,11 @@ const RevenueBilledPage = () => {
         const initialRows = Array.from({ length: totalDays }, () => ({ cash: '', bank: '' }));
 
         if (data) {
-          const recurring = data.revenueBilledRecurringMonthly ?? '';
+          const recurring = data.revenueBilledRecurringMonthly ?? 0;
           const outstandingTotal = (Number(data.revenueBilledOutstandingCash ?? 0) + Number(data.revenueBilledOutstandingBank ?? 0));
           setFormData({
             recurringMonthly: String(recurring),
-            outstandingBilled: outstandingTotal ? String(outstandingTotal) : ''
+            outstandingBilled: String(outstandingTotal)
           });
           // If there were received amounts, populate day 1 with them (keep as strings for controlled inputs)
           if ((data.revenueBilledReceivedCash ?? 0) !== 0 || (data.revenueBilledReceivedBank ?? 0) !== 0) {
@@ -48,7 +48,7 @@ const RevenueBilledPage = () => {
             };
           }
         } else {
-          setFormData({ recurringMonthly: '', outstandingBilled: '' });
+          setFormData({ recurringMonthly: '0', outstandingBilled: '0' });
         }
         setRows(initialRows);
         } catch (err) {
@@ -70,7 +70,7 @@ const RevenueBilledPage = () => {
   };
 
   const handleReset = () => {
-    setFormData({ recurringMonthly: '', outstandingBilled: '' });
+    setFormData({ recurringMonthly: '0', outstandingBilled: '0' });
     const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
     setRows(Array.from({ length: totalDays }, () => ({ cash: '', bank: '' })));
     setError('');
