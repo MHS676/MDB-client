@@ -160,6 +160,29 @@ const RevenueExpenditurePage = () => {
             <div className="mt-2 text-slate-700">Total receivables minus receivable outstanding equals receivable received till date.</div>
           </div>
         </div>
+
+        <div className="mt-4 rounded-xl bg-gradient-to-r from-emerald-50 to-blue-50 p-6 border border-emerald-200/60">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-4">Receivable Calculation Verification</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-600">Total Receivables</span>
+              <span className="font-bold text-rose-600">৳ {formatCurrency(metrics.totalReceivables)}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-600">−</span>
+              <span className="text-slate-400">minus</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-600">Receivable Outstanding Till Date</span>
+              <span className="font-bold text-slate-900">৳ {formatCurrency(metrics.receivableOutstandingTillDate)}</span>
+            </div>
+            <div className="h-px bg-slate-300 my-2"></div>
+            <div className="flex items-center justify-between text-sm font-bold">
+              <span className="text-slate-700">=</span>
+              <span className="text-emerald-600">Receivable Received Till Date: ৳ {formatCurrency(metrics.receivableReceivedTillDate)}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

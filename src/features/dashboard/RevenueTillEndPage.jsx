@@ -68,17 +68,7 @@ const RevenueTillEndPage = () => {
         if (data) {
           setReceivedTillDate(String(data.revenueTillEndReceivedCash ?? 0));
           const breakdownValues = toDayValueArray(data.revenueTillEndDailyBreakdown, totalDays);
-          const hasBreakdown = Array.isArray(data.revenueTillEndDailyBreakdown)
-            ? data.revenueTillEndDailyBreakdown.length > 0
-            : data.revenueTillEndDailyBreakdown && typeof data.revenueTillEndDailyBreakdown === 'object'
-              ? Object.keys(data.revenueTillEndDailyBreakdown).length > 0
-              : false;
-
-          setDayValues(
-            hasBreakdown
-              ? breakdownValues
-              : Array.from({ length: totalDays }, () => '0')
-          );
+          setDayValues(breakdownValues);
         } else {
           setReceivedTillDate('0');
           setDayValues(Array.from({ length: totalDays }, () => '0'));
