@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { financialRecordsAPI } from '../../services/api';
 
 const RevenueBilledPage = () => {
@@ -19,9 +19,7 @@ const RevenueBilledPage = () => {
   ];
 
   const [formData, setFormData] = useState({ recurringMonthly: '', outstandingBilled: '' });
-  const [rows, setRows] = useState([]);
 
-  // Recalculate day rows when month changes and fetch data
   useEffect(() => {
     const fetchPeriodData = async () => {
       try {
@@ -30,9 +28,6 @@ const RevenueBilledPage = () => {
           String(selectedMonth).padStart(2, '0'),
           String(currentYear)
         );
-        const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
-        const initialRows = Array.from({ length: totalDays }, () => ({ cash: '', bank: '' }));
-
         if (data) {
           const recurring = data.revenueBilledRecurringMonthly ?? 0;
           const outstandingTotal = (Number(data.revenueBilledOutstandingCash ?? 0) + Number(data.revenueBilledOutstandingBank ?? 0));
@@ -40,21 +35,12 @@ const RevenueBilledPage = () => {
             recurringMonthly: String(recurring),
             outstandingBilled: String(outstandingTotal)
           });
-          // If there were received amounts, populate day 1 with them (keep as strings for controlled inputs)
-          if ((data.revenueBilledReceivedCash ?? 0) !== 0 || (data.revenueBilledReceivedBank ?? 0) !== 0) {
-            initialRows[0] = {
-              cash: String(data.revenueBilledReceivedCash ?? ''),
-              bank: String(data.revenueBilledReceivedBank ?? '')
-            };
-          }
         } else {
           setFormData({ recurringMonthly: '0', outstandingBilled: '0' });
         }
-        setRows(initialRows);
-        } catch (err) {
+      } catch (err) {
         console.error('Error fetching period data:', err);
-        const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
-        setRows(Array.from({ length: totalDays }, () => ({ cash: '', bank: '' })));
+        setError(err.message || 'Failed to load revenue billed data');
       } finally {
         setLoading(false);
       }
@@ -62,17 +48,8 @@ const RevenueBilledPage = () => {
     fetchPeriodData();
   }, [selectedMonth, currentYear]);
 
-  const handleRowChange = (index, field, value) => {
-    const newRows = [...rows];
-    newRows[index] = { ...newRows[index], [field]: value };
-    setRows(newRows);
-    setError('');
-  };
-
   const handleReset = () => {
     setFormData({ recurringMonthly: '0', outstandingBilled: '0' });
-    const totalDays = new Date(currentYear, selectedMonth, 0).getDate();
-    setRows(Array.from({ length: totalDays }, () => ({ cash: '', bank: '' })));
     setError('');
   };
 
@@ -88,8 +65,6 @@ const RevenueBilledPage = () => {
         revenueBilledOutstandingCash: parseFloat(formData.outstandingBilled) || 0,
         // split outstanding into bank/cash not captured separately in UI — put total into cash and keep bank 0
         revenueBilledOutstandingBank: 0,
-        revenueBilledReceivedCash: rows.reduce((sum, r) => sum + (parseFloat(r.cash) || 0), 0),
-        revenueBilledReceivedBank: rows.reduce((sum, r) => sum + (parseFloat(r.bank) || 0), 0),
       };
 
       await financialRecordsAPI.save(payload);
@@ -132,7 +107,7 @@ const RevenueBilledPage = () => {
       {/* Top Metric Field Row */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] p-4 flex items-center justify-between">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Recurring Monthly Revenue Billed ({monthsList[selectedMonth].name})
+          Recurring Monthly Revenue Billed 
         </label>
         <div className="relative w-64">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">৳</span>
@@ -148,7 +123,7 @@ const RevenueBilledPage = () => {
 
             <div className="bg-white rounded-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] p-4 flex items-center justify-between">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Outstanding Revenue Billed ({monthsList[selectedMonth].name})
+          Outstanding Revenue Billed 
         </label>
         <div className="relative w-64">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">৳</span>
@@ -161,41 +136,6 @@ const RevenueBilledPage = () => {
           />
         </div>
       </div>
-
-      {/* Responsive One-Page Grid Workspace */}
-      {/* <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)] p-4">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Outstanding Revenue Billed</h2>
-
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 h-full content-start">
-          {rows.map((row, i) => (
-            <div 
-              key={i} 
-              className="bg-slate-50/60 rounded-lg p-2 border border-slate-100 flex flex-col justify-between hover:bg-white hover:border-emerald-200 hover:shadow-md hover:shadow-slate-100 transition-all duration-150"
-            >
-              <div className="text-[10px] font-mono font-bold text-slate-400 mb-1">
-                Day {String(i + 1).padStart(2, '0')}
-              </div>
-              
-              <div className="space-y-1">
-                <input
-                  type="number"
-                  placeholder="Cash"
-                  value={row.cash}
-                  onChange={(e) => handleRowChange(i, 'cash', e.target.value)}
-                  className="w-full bg-white border border-slate-200/80 rounded px-1.5 py-0.5 text-[11px] outline-none text-slate-700 focus:border-emerald-500 font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <input
-                  type="number"
-                  placeholder="Bank"
-                  value={row.bank}
-                  onChange={(e) => handleRowChange(i, 'bank', e.target.value)}
-                  className="w-full bg-white border border-slate-200/80 rounded px-1.5 py-0.5 text-[11px] outline-none text-slate-700 focus:border-emerald-500 font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div> */}
 
       {/* Simplified Flat Actions Footer */}
       <div className="flex justify-end gap-3 items-center pt-1">

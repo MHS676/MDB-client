@@ -137,7 +137,7 @@ const RevenueExpenditurePage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
+      {/* <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Monthly Report</h3>
@@ -183,7 +183,7 @@ const RevenueExpenditurePage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
