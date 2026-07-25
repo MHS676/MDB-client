@@ -103,37 +103,31 @@ const RevenueExpenditurePage = () => {
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Recurring Monthly Revenue Billed</div>
           <div className="mt-2 text-2xl font-black text-slate-900">৳ {formatCurrency(metrics.recurringMonthlyRevenueBilled)}</div>
-          <p className="mt-2 text-xs text-slate-400">Sum of active recurring contract fees invoiced in the selected billing cycle.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Outstanding Revenue Billed</div>
           <div className="mt-2 text-2xl font-black text-amber-600">৳ {formatCurrency(metrics.outstandingRevenueBilled)}</div>
-          <p className="mt-2 text-xs text-slate-400">Billed this month minus payments received for this month's invoices.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Receivables</div>
           <div className="mt-2 text-2xl font-black text-rose-500">৳ {formatCurrency(metrics.totalReceivables)}</div>
-          <p className="mt-2 text-xs text-slate-400">Unpaid invoices including current month and overdue balances.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Receivable Received Till Date</div>
           <div className="mt-2 text-2xl font-black text-emerald-600">৳ {formatCurrency(metrics.receivableReceivedTillDate)}</div>
-          <p className="mt-2 text-xs text-slate-400">Lifetime payments collected from day one up to the selected month.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Receivable Outstanding Till Date</div>
           <div className="mt-2 text-2xl font-black text-slate-900">৳ {formatCurrency(metrics.receivableOutstandingTillDate)}</div>
-          <p className="mt-2 text-xs text-slate-400">Lifetime invoiced amount minus total lifetime received.</p>
         </div>
 
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm text-white">
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Collection Coverage</div>
           <div className="mt-2 text-2xl font-black text-amber-400">{formatCurrency(receivableCoverage)}%</div>
-          <p className="mt-2 text-xs text-slate-400">How much of billed receivables have been collected so far.</p>
         </div>
       </div>
 
