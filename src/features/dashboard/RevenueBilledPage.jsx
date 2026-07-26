@@ -32,11 +32,11 @@ const RevenueBilledPage = () => {
           const recurring = data.revenueBilledRecurringMonthly ?? 0;
           const outstandingTotal = (Number(data.revenueBilledOutstandingCash ?? 0) + Number(data.revenueBilledOutstandingBank ?? 0));
           setFormData({
-            recurringMonthly: String(recurring),
-            outstandingBilled: String(outstandingTotal)
+            recurringMonthly: recurring ? String(recurring) : '',
+            outstandingBilled: outstandingTotal ? String(outstandingTotal) : ''
           });
         } else {
-          setFormData({ recurringMonthly: '0', outstandingBilled: '0' });
+          setFormData({ recurringMonthly: '', outstandingBilled: '' });
         }
       } catch (err) {
         console.error('Error fetching period data:', err);
@@ -49,7 +49,7 @@ const RevenueBilledPage = () => {
   }, [selectedMonth, currentYear]);
 
   const handleReset = () => {
-    setFormData({ recurringMonthly: '0', outstandingBilled: '0' });
+    setFormData({ recurringMonthly: '', outstandingBilled: '' });
     setError('');
   };
 

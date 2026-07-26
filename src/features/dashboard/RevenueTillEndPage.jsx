@@ -15,7 +15,8 @@ const asNumber = (value) => Number(value) || 0;
 const RevenueTillEndPage = () => {
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [receivedTillDate, setReceivedTillDate] = useState('0');
+  const [dailyEntries, setDailyEntries] = useState([]);
+  const [receivedBeforePeriod, setReceivedBeforePeriod] = useState({ cash: 0, bank: 0 });
   const [sourceValues, setSourceValues] = useState({ recurring: 0, billedOutstanding: 0, sources: null });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,8 +32,29 @@ const RevenueTillEndPage = () => {
         );
 
         const metrics = data?.metrics;
-        const received = asNumber(metrics?.receivableReceivedTillDate);
-        setReceivedTillDate(String(received));
+        const savedEntries = Array.isArray(data?.selectedRecord?.revenueTillEndDailyBreakdown)
+          ? data.selectedRecord.revenueTillEndDailyBreakdown
+          : [];
+        // Retain existing cumulative data as one editable entry when opening an
+        // old record for the first time.
+        const legacyCash = asNumber(data?.selectedRecord?.revenueTillEndReceivedCash);
+        const legacyBank = asNumber(data?.selectedRecord?.revenueTillEndReceivedBank);
+        const entries = savedEntries.length > 0 ? savedEntries.map((entry) => ({
+          ...entry,
+          cash: asNumber(entry.cash) || '',
+          bank: asNumber(entry.bank) || '',
+        })) : (
+          legacyCash || legacyBank
+            ? [{ date: `${currentYear}-${String(selectedMonth).padStart(2, '0')}-01`, cash: legacyCash, bank: legacyBank }]
+            : []
+        );
+        setDailyEntries(entries);
+        const periodCash = entries.reduce((sum, entry) => sum + asNumber(entry.cash), 0);
+        const periodBank = entries.reduce((sum, entry) => sum + asNumber(entry.bank), 0);
+        setReceivedBeforePeriod({
+          cash: Math.max(0, asNumber(metrics?.receivableReceivedCashTillDate) - periodCash),
+          bank: Math.max(0, asNumber(metrics?.receivableReceivedBankTillDate) - periodBank),
+        });
         setSourceValues({
           recurring: asNumber(metrics?.recurringMonthlyRevenueBilled),
           billedOutstanding: asNumber(metrics?.outstandingRevenueBilled),
@@ -50,10 +72,28 @@ const RevenueTillEndPage = () => {
   }, [selectedMonth, currentYear]);
 
   const totalReceivables = sourceValues.recurring + sourceValues.billedOutstanding;
-  const receivableOutstanding = useMemo(
-    () => totalReceivables - asNumber(receivedTillDate),
-    [totalReceivables, receivedTillDate],
-  );
+  const periodReceivedCash = useMemo(() => dailyEntries.reduce((sum, entry) => sum + asNumber(entry.cash), 0), [dailyEntries]);
+  const periodReceivedBank = useMemo(() => dailyEntries.reduce((sum, entry) => sum + asNumber(entry.bank), 0), [dailyEntries]);
+  const receivedCash = receivedBeforePeriod.cash + periodReceivedCash;
+  const receivedBank = receivedBeforePeriod.bank + periodReceivedBank;
+  const receivedTillDate = receivedCash + receivedBank;
+  const receivableOutstanding = useMemo(() => totalReceivables - receivedTillDate, [totalReceivables, receivedTillDate]);
+
+  const updateEntry = (index, field, value) => {
+    setDailyEntries((entries) => entries.map((entry, entryIndex) => (
+      entryIndex === index ? { ...entry, [field]: value } : entry
+    )));
+    setError('');
+  };
+
+  const addEntry = () => {
+    setDailyEntries((entries) => [...entries, {
+      date: '', cash: '', bank: '',
+    }]);
+  };
+
+  const periodStart = `${currentYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+  const periodEnd = `${currentYear}-${String(selectedMonth).padStart(2, '0')}-${String(new Date(currentYear, selectedMonth, 0).getDate()).padStart(2, '0')}`;
 
   const formatCurrency = (value) => new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
@@ -61,8 +101,7 @@ const RevenueTillEndPage = () => {
   }).format(value);
 
   const handleSave = async () => {
-    const received = asNumber(receivedTillDate);
-    if (received > totalReceivables) {
+    if (receivedTillDate > totalReceivables) {
       setError('Received till date cannot be greater than total receivables.');
       return;
     }
@@ -73,10 +112,11 @@ const RevenueTillEndPage = () => {
       await financialRecordsAPI.save({
         month: String(selectedMonth).padStart(2, '0'),
         year: String(currentYear),
-        // Store the entered cumulative amount in one place. Keeping bank at
-        // zero prevents an old bank value from being counted a second time.
-        revenueTillEndReceivedCash: received,
-        revenueTillEndReceivedBank: 0,
+        revenueTillEndDailyBreakdown: dailyEntries.map((entry) => ({
+          date: entry.date,
+          cash: asNumber(entry.cash),
+          bank: asNumber(entry.bank),
+        })),
       });
       alert('✓ Receivable received till date saved successfully!');
     } catch (err) {
@@ -90,7 +130,7 @@ const RevenueTillEndPage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">Record cumulative collections. Outstanding is calculated automatically.</p>
+        <p className="text-xs text-slate-500">Record each day’s collection by cash and bank. Outstanding is calculated automatically.</p>
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -117,27 +157,38 @@ const RevenueTillEndPage = () => {
             : 'not entered'}
         </p>
 
-        <label className="flex items-center justify-between gap-6">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Receivable Received Till Date</span>
-          <span className="relative w-64">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">৳</span>
-            <input
-              type="number"
-              min="0"
-              value={receivedTillDate}
-              onChange={(e) => { setReceivedTillDate(e.target.value); setError(''); }}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-8 pr-3 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
-              placeholder="0.00"
-            />
-          </span>
-        </label>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Daily Receivable Received</span>
+            <button type="button" onClick={addEntry} className="rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50">+ Add day</button>
+          </div>
+          <div className="grid grid-cols-[1.1fr_1fr_1fr_auto] gap-2  text-[12px] font-bold uppercase tracking-wider text-slate-400">
+            <span>Date</span><span className="">Cash</span><span className="">Bank</span><span />
+          </div>
+          {dailyEntries.length === 0 ? (
+            <p className="rounded-lg bg-slate-50 px-4 py-3 text-xs text-slate-500">No daily collections entered for this month.</p>
+          ) : dailyEntries.map((entry, index) => (
+            <div key={`${entry.date}-${index}`} className="grid grid-cols-[1.1fr_1fr_1fr_auto] gap-2">
+              <input type="date" min={periodStart} max={periodEnd} value={entry.date} onChange={(e) => updateEntry(index, 'date', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-500" />
+              <input type="number" min="0" value={entry.cash} onChange={(e) => updateEntry(index, 'cash', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500" placeholder="0.00" />
+              <input type="number" min="0" value={entry.bank} onChange={(e) => updateEntry(index, 'bank', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500" placeholder="0.00" />
+              <button type="button" onClick={() => setDailyEntries((entries) => entries.filter((_, entryIndex) => entryIndex !== index))} className="px-2 text-xs font-bold text-rose-500 hover:text-rose-700">Remove</button>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm">
+          <div><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Cash Till Date</span><span className="font-black text-emerald-700">৳ {formatCurrency(receivedCash)}</span></div>
+          <div><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bank Till Date</span><span className="font-black text-emerald-700">৳ {formatCurrency(receivedBank)}</span></div>
+          <div className="text-right"><span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Received Till Date</span><span className="font-black text-emerald-700">৳ {formatCurrency(receivedTillDate)}</span></div>
+        </div>
 
         <div className="flex items-center justify-between gap-6 rounded-xl bg-slate-50 px-4 py-4">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Receivable Outstanding Till Date</span>
           <span className={`text-xl font-black ${receivableOutstanding < 0 ? 'text-rose-600' : 'text-slate-900'}`}>৳ {formatCurrency(receivableOutstanding)}</span>
         </div>
 
-        <p className="text-xs text-slate-500">Formula: Total Receivables − Receivable Received Till Date = Receivable Outstanding Till Date.</p>
+        <p className="text-xs text-slate-500">Formula: Total Receivables − (daily cash + daily bank) = Receivable Outstanding Till Date.</p>
       </div>
 
       <div className="flex justify-end">

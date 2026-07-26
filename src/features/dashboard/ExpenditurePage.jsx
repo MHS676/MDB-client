@@ -138,7 +138,7 @@ const ExpenditurePage = () => {
                 value={formData.budgeted}
                 onChange={(e) => handleInputChange('budgeted', e.target.value)}
                 className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none text-slate-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="0,000,000.00"
+                placeholder="0.00"
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ const ExpenditurePage = () => {
                 value={formData.actual}
                 onChange={(e) => handleInputChange('actual', e.target.value)}
                 className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none text-slate-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="0,000,000.00"
+                placeholder="0.00"
               />
             </div>
           </div>

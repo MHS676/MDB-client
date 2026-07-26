@@ -26,6 +26,19 @@ function App() {
     setIsHydrating(false);
   }, []);
 
+  // Mouse-wheel events over a focused number input can change its value.
+  // Remove focus first so the page can still scroll without editing the input.
+  useEffect(() => {
+    const stopNumberInputScrollChange = (event) => {
+      if (event.target instanceof HTMLInputElement && event.target.type === 'number') {
+        event.target.blur();
+      }
+    };
+
+    document.addEventListener('wheel', stopNumberInputScrollChange, { passive: true });
+    return () => document.removeEventListener('wheel', stopNumberInputScrollChange);
+  }, []);
+
   // Save the current active workspace configuration view when flipped
   const handleRouteChange = (route) => {
     setAppRoute(route);
