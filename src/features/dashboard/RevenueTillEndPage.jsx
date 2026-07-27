@@ -170,8 +170,8 @@ const RevenueTillEndPage = () => {
           ) : dailyEntries.map((entry, index) => (
             <div key={`${entry.date}-${index}`} className="grid grid-cols-[1.1fr_1fr_1fr_auto] gap-2">
               <input type="date" min={periodStart} max={periodEnd} value={entry.date} onChange={(e) => updateEntry(index, 'date', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-500" />
-              <input type="number" min="0" value={entry.cash} onChange={(e) => updateEntry(index, 'cash', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500" placeholder="0.00" />
-              <input type="number" min="0" value={entry.bank} onChange={(e) => updateEntry(index, 'bank', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500" placeholder="0.00" />
+              <input type="number" placeholder="0.00"  value={entry.cash} onChange={(e) => updateEntry(index, 'cash', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500" placeholder="0.00" />
+              <input type="number" placeholder="0.00" value={entry.bank} onChange={(e) => updateEntry(index, 'bank', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 outline-none focus:border-emerald-500" placeholder="0.00" />
               <button type="button" onClick={() => setDailyEntries((entries) => entries.filter((_, entryIndex) => entryIndex !== index))} className="px-2 text-xs font-bold text-rose-500 hover:text-rose-700">Remove</button>
             </div>
           ))}
@@ -188,7 +188,7 @@ const RevenueTillEndPage = () => {
           <span className={`text-xl font-black ${receivableOutstanding < 0 ? 'text-rose-600' : 'text-slate-900'}`}>৳ {formatCurrency(receivableOutstanding)}</span>
         </div>
 
-        <p className="text-xs text-slate-500">Formula: Total Receivables − (daily cash + daily bank) = Receivable Outstanding Till Date.</p>
+        {/* <p className="text-xs text-slate-500">Formula: Total Receivables − (daily cash + daily bank) = Receivable Outstanding Till Date.</p> */}
       </div>
 
       <div className="flex justify-end">
