@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { financialRecordsAPI } from '../../services/api';
 
 const RevenueBilledPage = () => {
-  const currentYear = 2026;
+  const currentYear = new Date().getFullYear();
   const now = new Date();
   const defaultMonth = now.getMonth() + 1; // 1..12
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);

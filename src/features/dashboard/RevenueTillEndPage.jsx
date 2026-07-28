@@ -130,7 +130,7 @@ const RevenueTillEndPage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">Record each day’s collection by cash and bank. Outstanding is calculated automatically.</p>
+        {/* <p className="text-xs text-slate-500">Record each day’s collection by cash and bank. Outstanding is calculated automatically.</p> */}
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(Number(e.target.value))}

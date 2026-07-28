@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import RevenueBilledPage from './RevenueBilledPage';
 import RevenueTillEndPage from './RevenueTillEndPage';
 import ExpenditurePage from './ExpenditurePage';
@@ -12,6 +12,19 @@ const NewDashboard = ({ user, onSignOut }) => {
 
   // Reset default view to the core data input page
   const [currentPage, setCurrentPage] = useState('Revenue Billed');
+  const [systemTime, setSystemTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setSystemTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const systemDate = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Dhaka', day: '2-digit', month: '2-digit', year: 'numeric',
+  }).format(systemTime);
+  const systemClock = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).format(systemTime);
 
   // Clean, focused navigation schema with only the required input screens
   const navigationStructure = [
@@ -118,10 +131,10 @@ const NewDashboard = ({ user, onSignOut }) => {
         <header className="h-16 border-b border-slate-200/60 bg-white/80 backdrop-blur px-6 flex items-center justify-between shrink-0 select-none">
           <div className="flex items-center gap-6">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              System Date: <span className="text-slate-700 ml-1 font-mono">17/06/2026</span>
+              System Date: <span className="text-slate-700 ml-1 font-mono">{systemDate}</span>
             </div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              System Time: <span className="text-slate-700 ml-1 font-mono">15:05:47</span>
+              System Time: <span className="text-slate-700 ml-1 font-mono">{systemClock}</span>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import RevenueExpenditurePage from '../../pages/RevenueExpenditurePage';
 import FinancialCompliancePage from '../../pages/FinancialCompliancePage';
 import KpiAnalyticsPage from '../../pages/KpiAnalyticsPage';
@@ -8,6 +8,19 @@ const FalconDashboard = ({ user, onSignOut }) => {
   const userInitial = userName.charAt(0).toUpperCase();
 
   const [currentPage, setCurrentPage] = useState('Revenue & Expenditure');
+  const [systemTime, setSystemTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setSystemTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const systemDate = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Dhaka', day: '2-digit', month: '2-digit', year: 'numeric',
+  }).format(systemTime).replaceAll('/', ' / ');
+  const systemClock = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).format(systemTime);
 
   const navigationStructure = [
     {
@@ -118,10 +131,10 @@ const FalconDashboard = ({ user, onSignOut }) => {
 
           <div className="flex items-center gap-8">
             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              DATE SYSTEM: <span className="text-white ml-2 font-mono text-xs">17 / 06 / 2026</span>
+              DATE SYSTEM: <span className="text-white ml-2 font-mono text-xs">{systemDate}</span>
             </div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              TIME SYSTEM: <span className="text-white ml-2 font-mono text-xs">16:53:06</span>
+              TIME SYSTEM: <span className="text-white ml-2 font-mono text-xs">{systemClock}</span>
             </div>
 
             {/* Profile Pillar */}

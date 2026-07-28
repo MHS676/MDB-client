@@ -17,7 +17,7 @@ const monthOptions = [
 ];
 
 const RevenueExpenditurePage = () => {
-  const currentYear = 2026;
+  const currentYear = new Date().getFullYear();
   const now = new Date();
   const defaultMonth = now.getMonth() + 1;
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
@@ -101,32 +101,32 @@ const RevenueExpenditurePage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Recurring Monthly Revenue Billed</div>
+          <div className="text-[12px] font-bold uppercase tracking-widest text-black">Recurring Monthly Revenue Billed</div>
           <div className="mt-2 text-2xl font-black text-slate-900">৳ {formatCurrency(metrics.recurringMonthlyRevenueBilled)}</div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Outstanding Revenue Billed</div>
+          <div className="text-[12px] font-bold uppercase tracking-widest text-black">Outstanding Revenue Billed</div>
           <div className="mt-2 text-2xl font-black text-amber-600">৳ {formatCurrency(metrics.outstandingRevenueBilled)}</div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Receivables</div>
+          <div className="text-[12px] font-bold uppercase tracking-widest text-black">Total Receivables</div>
           <div className="mt-2 text-2xl font-black text-rose-500">৳ {formatCurrency(metrics.totalReceivables)}</div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Receivable Received Till Date</div>
+          <div className="text-[12px] font-bold uppercase tracking-widest text-black">Receivable Received Till Date</div>
           <div className="mt-2 text-2xl font-black text-emerald-600">৳ {formatCurrency(metrics.receivableReceivedTillDate)}</div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Receivable Outstanding Till Date</div>
+          <div className="text-[12px] font-bold uppercase tracking-widest text-black">Receivable Outstanding Till Date</div>
           <div className="mt-2 text-2xl font-black text-slate-900">৳ {formatCurrency(metrics.receivableOutstandingTillDate)}</div>
         </div>
 
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm text-white">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Collection Coverage</div>
+          <div className="text-[12px] font-bold uppercase tracking-widest text-slate-400">Collection Coverage</div>
           <div className="mt-2 text-2xl font-black text-amber-400">{formatCurrency(receivableCoverage)}%</div>
         </div>
       </div>

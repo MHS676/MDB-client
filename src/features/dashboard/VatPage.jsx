@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { financialRecordsAPI } from '../../services/api';
 
 const VatCompliancePage = () => {
-  const currentYear = 2026;
+  const currentYear = new Date().getFullYear();
   const now = new Date();
   const defaultMonth = now.getMonth() + 1;
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
