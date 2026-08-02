@@ -140,7 +140,7 @@ const FalconDashboard = ({ user, onSignOut }) => {
             {/* Profile Pillar */}
             <div className="flex items-center gap-3 border-l border-slate-700 pl-6">
               <div className="flex flex-col text-right">
-                <span className="text-xs font-bold text-white tracking-tight">Executive Director</span>
+                {/* <span className="text-xs font-bold text-white tracking-tight">Executive Director</span> */}
                 <span className="text-[9px] text-slate-400 font-medium">Falcon Management</span>
               </div>
               <div className="w-8 h-8 bg-slate-700 text-slate-300 text-xs font-extrabold flex items-center justify-center rounded-lg shadow-inner">
