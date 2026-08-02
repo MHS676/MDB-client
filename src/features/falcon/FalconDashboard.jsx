@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import RevenueExpenditurePage from '../../pages/RevenueExpenditurePage';
 import FinancialCompliancePage from '../../pages/FinancialCompliancePage';
 import KpiAnalyticsPage from '../../pages/KpiAnalyticsPage';
+import MapCmcPage from '../../pages/MapCmcPage';
 
 const FalconDashboard = ({ user, onSignOut }) => {
   const userName = user?.name || 'Yusuf';
@@ -39,6 +40,7 @@ const FalconDashboard = ({ user, onSignOut }) => {
       groupHeading: "Analytics",
       items: [
         { id: 'Key Performance Indicators', label: 'Key Performance Indicators', icon: '📈' },
+        { id: 'Map CMC', label: 'Map CMC', icon: '🗺️' },
       ]
     }
   ];
@@ -51,6 +53,8 @@ const FalconDashboard = ({ user, onSignOut }) => {
         return <FinancialCompliancePage />;
       case 'Key Performance Indicators':
         return <KpiAnalyticsPage />;
+      case 'Map CMC':
+        return <MapCmcPage />;
       default:
         return <RevenueExpenditurePage />;
     }
