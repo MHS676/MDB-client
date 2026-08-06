@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import RevenueBilledPage from './RevenueBilledPage';
 import RevenueTillEndPage from './RevenueTillEndPage';
 import ExpenditurePage from './ExpenditurePage';
+import EscortExpenditureSummaryPage from './EscortExpenditureSummaryPage';
 import VatCompliancePage from './VatPage';
 import TdsCompliancePage from './TdsPage';
 
@@ -34,6 +35,7 @@ const NewDashboard = ({ user, onSignOut }) => {
         { id: 'Revenue Billed', label: 'Revenue Billed', icon: '📝' },
         { id: 'Revenue Till End', label: 'Revenue Till End', icon: '📈' },
         { id: 'Expenditure', label: 'Expenditure Summary', icon: '📉' },
+        { id: 'Escort Expenditure', label: 'Escort Expenditure Summary', icon: '🚓' },
       ]
     },
     {
@@ -54,6 +56,8 @@ const NewDashboard = ({ user, onSignOut }) => {
         return <RevenueTillEndPage />;
       case 'Expenditure':
         return <ExpenditurePage />;
+      case 'Escort Expenditure':
+        return <EscortExpenditureSummaryPage />;
       case 'VAT Compliance':
         return <VatCompliancePage />;
       case 'TDS Compliance':

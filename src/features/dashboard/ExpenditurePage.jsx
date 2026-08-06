@@ -18,7 +18,6 @@ const ExpenditurePage = () => {
     { value: 11, name: 'November' }, { value: 12, name: 'December' },
   ];
 
-  // Refactored state keys for expenditure tracking
   const [formData, setFormData] = useState({
     budgeted: '',
     actual: '',
@@ -59,7 +58,6 @@ const ExpenditurePage = () => {
     setError('');
   };
 
-  // Real-time calculation mechanics
   const budgetedNum = parseFloat(formData.budgeted) || 0;
   const actualNum = parseFloat(formData.actual) || 0;
   const variance = budgetedNum - actualNum;
@@ -97,14 +95,12 @@ const ExpenditurePage = () => {
 
   return (
     <div className="h-[calc(100vh-140px)] flex flex-col justify-between max-w-4xl mx-auto space-y-4 overflow-hidden select-none">
-      
-      {/* Header Controller Section */}
       <div className="flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-xl font-bold text-slate-800 tracking-tight">Expenditure Management</h2>
           <p className="text-xs text-slate-400 mt-0.5">Log monthly operational budgets and calculate variances against target spending.</p>
         </div>
-        
+
         <div className="relative">
           <select
             value={selectedMonth}
@@ -121,12 +117,8 @@ const ExpenditurePage = () => {
         </div>
       </div>
 
-      {/* Main Single-Page Workspace Form Card */}
       <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] p-8 flex flex-col justify-center items-center">
-        
         <div className="w-full max-w-lg space-y-6">
-          
-          {/* Field 1: Budgeted Expenditure */}
           <div className="flex items-center justify-between gap-6">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider w-36">
               Budgeted
@@ -143,7 +135,6 @@ const ExpenditurePage = () => {
             </div>
           </div>
 
-          {/* Field 2: Actual Expenditure */}
           <div className="flex items-center justify-between gap-6">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider w-36">
               Actual (Till Date)
@@ -160,33 +151,27 @@ const ExpenditurePage = () => {
             </div>
           </div>
 
-          {/* <hr className="border-dashed border-slate-200" /> */}
-
-          {/* Calculated Output Indicator: Expenditure Variance */}
-          {/* <div className="flex items-center justify-between gap-6 bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+          <div className="flex items-center justify-between gap-6 bg-slate-50/70 p-4 rounded-xl border border-slate-100">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Total Variance (+/-)
             </span>
             <div className={`text-base font-black px-1 ${variance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
               {variance >= 0 ? '+ ' : '- '}৳ {formatCurrency(variance)}
             </div>
-          </div> */}
-
+          </div>
         </div>
-
       </div>
 
-      {/* Footer Interface controls */}
       <div className="flex justify-end gap-3 items-center shrink-0">
         {error && <p className="text-xs text-red-600 font-semibold">{error}</p>}
-        <button 
+        <button
           onClick={handleReset}
           disabled={loading}
           className="px-4 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-100 transition-all disabled:opacity-50"
         >
           Reset
         </button>
-        <button 
+        <button
           onClick={handleSave}
           disabled={loading}
           className="px-5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -194,7 +179,6 @@ const ExpenditurePage = () => {
           {loading ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
-
     </div>
   );
 };

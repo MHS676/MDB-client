@@ -3,6 +3,7 @@ import RevenueExpenditurePage from '../../pages/RevenueExpenditurePage';
 import FinancialCompliancePage from '../../pages/FinancialCompliancePage';
 import KpiAnalyticsPage from '../../pages/KpiAnalyticsPage';
 import MapCmcPage from '../../pages/MapCmcPage';
+import EscortExpenditureSummaryPage from '../dashboard/EscortExpenditureSummaryPage';
 
 const FalconDashboard = ({ user, onSignOut }) => {
   const userName = user?.name || 'Yusuf';
@@ -28,6 +29,7 @@ const FalconDashboard = ({ user, onSignOut }) => {
       groupHeading: "Operations",
       items: [
         { id: 'Revenue & Expenditure', label: 'Revenue & Expenditure', icon: '📊' },
+        { id: 'Escort Expenditure Summary', label: 'Escort Expenditure Summary', icon: '🚓' },
       ]
     },
     {
@@ -49,6 +51,8 @@ const FalconDashboard = ({ user, onSignOut }) => {
     switch (currentPage) {
       case 'Revenue & Expenditure':
         return <RevenueExpenditurePage />;
+      case 'Escort Expenditure Summary':
+        return <EscortExpenditureSummaryPage />;
       case 'Financial Compliance':
         return <FinancialCompliancePage />;
       case 'Key Performance Indicators':
