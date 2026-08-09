@@ -30,7 +30,7 @@ const formatChartLabel = (value) => {
   }).format(date);
 };
 
-const ExpenditureAnalytics = ({ records, chartType = 'pie' }) => {
+const ExpenditureAnalytics = ({ records, chartType = 'pie', onPrintChart = null }) => {
   const totalReceived = records.reduce((sum, record) => sum + Number(record.receivedAmount || 0), 0);
   const totalExpenditure = records.reduce((sum, record) => sum + Number(record.expenditure || 0), 0);
   const netBalance = totalReceived - totalExpenditure;
@@ -67,10 +67,21 @@ const ExpenditureAnalytics = ({ records, chartType = 'pie' }) => {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-slate-700">
-          {chartType === 'line' ? 'Trend over time' : 'Income vs expenditure'}
-        </h3>
+      <div id="escort-exec-chart" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-slate-700">
+            {chartType === 'line' ? 'Trend over time' : 'Income vs expenditure'}
+          </h3>
+          {onPrintChart ? (
+            <button
+              type="button"
+              onClick={onPrintChart}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Print / Export Chart
+            </button>
+          ) : null}
+        </div>
         <div className="mt-4 h-72">
           {records.length ? (
             chartType === 'line' ? (

@@ -18,7 +18,7 @@ const formatDate = (value) => {
   }).format(date);
 };
 
-const ExpenditureTable = ({ records, onEdit, onDelete, loading }) => {
+const ExpenditureTable = ({ records, onEdit, onDelete, loading, readOnly = false }) => {
   if (loading) {
     return <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Loading records...</div>;
   }
@@ -26,7 +26,7 @@ const ExpenditureTable = ({ records, onEdit, onDelete, loading }) => {
   if (!records.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-        No expenditure records yet. Create one to get started.
+        {readOnly ? 'No matching escort records found for the selected filters.' : 'No expenditure records yet. Create one to get started.'}
       </div>
     );
   }
@@ -43,7 +43,8 @@ const ExpenditureTable = ({ records, onEdit, onDelete, loading }) => {
             <th className="px-3 py-3 text-left font-semibold text-slate-600">Expenditure</th>
             <th className="px-3 py-3 text-left font-semibold text-slate-600">Surplus</th>
             <th className="px-3 py-3 text-left font-semibold text-slate-600">Remarks</th>
-            <th className="px-3 py-3 text-right font-semibold text-slate-600">Actions</th>
+            <th className="px-3 py-3 text-left font-semibold text-slate-600">Source File</th>
+            {!readOnly ? <th className="px-3 py-3 text-right font-semibold text-slate-600">Actions</th> : null}
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 bg-white">
@@ -62,22 +63,37 @@ const ExpenditureTable = ({ records, onEdit, onDelete, loading }) => {
                 <td className="max-w-[220px] px-3 py-3 text-slate-600">
                   {record.remarks || '—'}
                 </td>
-                <td className="px-3 py-3 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => onEdit(record)}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(record.id)}
-                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                <td className="whitespace-nowrap px-3 py-3 text-slate-700">
+                  {record.sourceFile ? (
+                    (typeof record.sourceFile === 'string' && record.sourceFile.startsWith('http')) ? (
+                      <a href={record.sourceFile} target="_blank" rel="noreferrer" className="text-emerald-600 hover:underline">
+                        View
+                      </a>
+                    ) : (
+                      <span className="text-slate-700">{record.sourceFile}</span>
+                    )
+                  ) : (
+                    '—'
+                  )}
                 </td>
+                {!readOnly ? (
+                  <td className="px-3 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => onEdit(record)}
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(record.id)}
+                        className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                ) : null}
               </tr>
             );
           })}

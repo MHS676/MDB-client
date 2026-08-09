@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import RevenueBilledPage from './RevenueBilledPage';
 import RevenueTillEndPage from './RevenueTillEndPage';
 import ExpenditurePage from './ExpenditurePage';
-import EscortExpenditureSummaryPage from './EscortExpenditureSummaryPage';
+import EscortExpenditureDataEntryPage from './EscortExpenditureDataEntryPage';
 import VatCompliancePage from './VatPage';
 import TdsCompliancePage from './TdsPage';
 
@@ -57,7 +57,7 @@ const NewDashboard = ({ user, onSignOut }) => {
       case 'Expenditure':
         return <ExpenditurePage />;
       case 'Escort Expenditure':
-        return <EscortExpenditureSummaryPage />;
+        return <EscortExpenditureDataEntryPage />;
       case 'VAT Compliance':
         return <VatCompliancePage />;
       case 'TDS Compliance':

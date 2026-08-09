@@ -1,5 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const EXPENDITURE_API_URL = import.meta.env.VITE_EXPENDITURE_API_URL || 'http://localhost:3000/expenditures';
+// Default to the main API URL + /expenditures when a specific env var is not set
+const EXPENDITURE_API_URL = import.meta.env.VITE_EXPENDITURE_API_URL || `${API_URL}/expenditures`;
 
 // Get the JWT token from localStorage
 const getToken = () => {

@@ -1,21 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ExpenditureAnalytics from '../../components/expenditure/ExpenditureAnalytics';
-import ExpenditureForm from '../../components/expenditure/ExpenditureForm';
 import ExpenditureTable from '../../components/expenditure/ExpenditureTable';
 import { expenditureAPI } from '../../services/api';
-
-const createInitialFormState = () => {
-  const today = new Date().toISOString().slice(0, 10);
-  return {
-    date: today,
-    totalEscort: '',
-    coverVan: '',
-    receivedAmount: '',
-    expenditure: '',
-    remarks: '',
-    sourceFile: '',
-  };
-};
 
 const normalizeRecords = (data) => {
   if (Array.isArray(data)) return data;
@@ -26,18 +12,13 @@ const normalizeRecords = (data) => {
 
 const EscortExpenditureSummaryPage = () => {
   const [records, setRecords] = useState([]);
-  const [formData, setFormData] = useState(createInitialFormState());
-  const [editingId, setEditingId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sourceFileFilter, setSourceFileFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [chartType, setChartType] = useState('pie');
-
-  const computedSurplus = useMemo(() => {
-    return (Number(formData.receivedAmount) || 0) - (Number(formData.expenditure) || 0);
-  }, [formData.receivedAmount, formData.expenditure]);
 
   const loadRecords = async () => {
     try {
@@ -55,86 +36,75 @@ const EscortExpenditureSummaryPage = () => {
     loadRecords();
   }, []);
 
-  const resetForm = () => {
-    setFormData(createInitialFormState());
-    setEditingId(null);
-    setIsEditing(false);
+
+  const sourceFileOptions = useMemo(() => {
+    return [...new Set(records.map((record) => record.sourceFile).filter(Boolean))];
+  }, [records]);
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSourceFileFilter('all');
+    setDateFrom('');
+    setDateTo('');
   };
 
-  const handleFieldChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setStatusMessage('');
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setStatusMessage('');
-
-    try {
-      const payload = {
-        date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
-        totalEscort: Number(formData.totalEscort) || 0,
-        coverVan: Number(formData.coverVan) || 0,
-        receivedAmount: Number(formData.receivedAmount) || 0,
-        expenditure: Number(formData.expenditure) || 0,
-        surplusDue: computedSurplus,
-        remarks: formData.remarks.trim() || null,
-        sourceFile: formData.sourceFile.trim() || null,
-      };
-
-      if (isEditing && editingId) {
-        await expenditureAPI.update(editingId, payload);
-        setStatusMessage('Escort expenditure record updated successfully.');
-      } else {
-        await expenditureAPI.create(payload);
-        setStatusMessage('Escort expenditure record created successfully.');
-      }
-
-      resetForm();
-      await loadRecords();
-    } catch (error) {
-      setStatusMessage(error.message || 'Unable to save escort expenditure record.');
-    } finally {
-      setIsSubmitting(false);
+  const handlePrintChart = () => {
+    const chartNode = document.getElementById('escort-exec-chart');
+    if (!chartNode) {
+      setStatusMessage('Chart container unavailable for print/export.');
+      return;
     }
-  };
 
-  const handleEdit = (record) => {
-    setEditingId(record.id);
-    setIsEditing(true);
-    setFormData({
-      date: record.date ? new Date(record.date).toISOString().slice(0, 10) : createInitialFormState().date,
-      totalEscort: record.totalEscort ?? '',
-      coverVan: record.coverVan ?? '',
-      receivedAmount: record.receivedAmount ?? '',
-      expenditure: record.expenditure ?? '',
-      remarks: record.remarks ?? '',
-      sourceFile: record.sourceFile ?? '',
-    });
-    setStatusMessage('');
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this escort expenditure record?')) return;
-
-    try {
-      setIsSubmitting(true);
-      await expenditureAPI.delete(id);
-      setStatusMessage('Escort expenditure record deleted successfully.');
-      await loadRecords();
-    } catch (error) {
-      setStatusMessage(error.message || 'Unable to delete escort expenditure record.');
-    } finally {
-      setIsSubmitting(false);
+    const printWindow = window.open('', '_blank', 'width=1200,height=900');
+    if (!printWindow) {
+      setStatusMessage('Please allow popups to print or export the chart.');
+      return;
     }
+
+    const now = new Date();
+    const printedAt = new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Dhaka',
+    }).format(now);
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Escort Expenditure Chart Report</title>
+          <style>
+            body { font-family: Inter, Arial, sans-serif; margin: 24px; color: #0f172a; }
+            h1 { font-size: 18px; margin: 0 0 8px; }
+            p { margin: 0 0 16px; color: #475569; font-size: 12px; }
+            .chart-shell { border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; }
+          </style>
+        </head>
+        <body>
+          <h1>Falcon Executive View — Escort Expenditure</h1>
+          <p>Printed at ${printedAt}</p>
+          <div class="chart-shell">${chartNode.innerHTML}</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   const filteredRecords = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-    if (!query) return records;
-
     return records.filter((record) => {
+      const recordDate = record.date ? new Date(record.date) : null;
+      const hasDate = recordDate && !Number.isNaN(recordDate.getTime());
+      const fromDate = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
+      const toDate = dateTo ? new Date(`${dateTo}T23:59:59`) : null;
+
+      const inDateRange =
+        (!fromDate || (hasDate && recordDate >= fromDate)) &&
+        (!toDate || (hasDate && recordDate <= toDate));
+
+      const matchesSource = sourceFileFilter === 'all' || (record.sourceFile || '') === sourceFileFilter;
+
       const haystack = [
         record.remarks,
         record.sourceFile,
@@ -148,57 +118,93 @@ const EscortExpenditureSummaryPage = () => {
         .join(' ')
         .toLowerCase();
 
-      return haystack.includes(query);
+      const matchesSearch = !query || haystack.includes(query);
+
+      return inDateRange && matchesSource && matchesSearch;
     });
-  }, [records, searchTerm]);
+  }, [records, searchTerm, sourceFileFilter, dateFrom, dateTo]);
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Escort expenditure summary</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage escort expenditure records and monitor received amount, spend, and surplus trends.
+            <h2 className="text-2xl font-semibold text-slate-900">Falcon executive view — escort expenditure report</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Read-only analytical reporting workspace. Data entry and CRUD are available in Data Input Core.
             </p>
           </div>
-          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
-            Escort CRUD dashboard
+          <div className="rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+            Executive read-only mode
           </div>
-        </div>
-
-        <div className="mt-6">
-          <ExpenditureForm
-            formData={formData}
-            onFieldChange={handleFieldChange}
-            onSubmit={handleSubmit}
-            onCancel={resetForm}
-            isSubmitting={isSubmitting}
-            isEditing={isEditing}
-            computedSurplus={computedSurplus}
-          />
         </div>
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Falcon executive view</h3>
-            <p className="text-sm text-slate-500">Review summary cards and trend charts separately from the entry form.</p>
+            <h3 className="text-lg font-semibold text-slate-900">Analytical summary</h3>
+            <p className="text-sm text-slate-500">Filters instantly update KPI cards, chart trends, and underlying escort records.</p>
           </div>
           {statusMessage ? <p className="text-sm text-emerald-600">{statusMessage}</p> : null}
         </div>
-        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <label className="flex flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-            <span className="font-medium">Search</span>
+        <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <label className="space-y-1 text-sm text-slate-600">
+            <span className="font-medium">Date from</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 outline-none"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm text-slate-600">
+            <span className="font-medium">Date to</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 outline-none"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm text-slate-600">
+            <span className="font-medium">Source file</span>
+            <select
+              value={sourceFileFilter}
+              onChange={(event) => setSourceFileFilter(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 outline-none"
+            >
+              <option value="all">All source files</option>
+              {sourceFileOptions.map((sourceFile) => (
+                <option key={sourceFile} value={sourceFile}>
+                  {sourceFile}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1 text-sm text-slate-600 xl:col-span-2">
+            <span className="font-medium">Remarks / search</span>
             <input
               type="text"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search remarks, file, amount or date"
-              className="w-full bg-transparent outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 outline-none"
             />
           </label>
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Reset filters
+          </button>
 
           <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
             <span>Chart</span>
@@ -212,17 +218,18 @@ const EscortExpenditureSummaryPage = () => {
             </select>
           </label>
         </div>
-        <ExpenditureAnalytics records={filteredRecords} chartType={chartType} />
+
+        <ExpenditureAnalytics records={filteredRecords} chartType={chartType} onPrintChart={handlePrintChart} />
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Escort records</h3>
-            <p className="text-sm text-slate-500">Edit or remove any saved escort expenditure entry.</p>
+            <p className="text-sm text-slate-500">Filtered read-only table for executive review and verification.</p>
           </div>
         </div>
-        <ExpenditureTable records={records} onEdit={handleEdit} onDelete={handleDelete} loading={isLoading} />
+        <ExpenditureTable records={filteredRecords} loading={isLoading} readOnly />
       </div>
     </div>
   );
