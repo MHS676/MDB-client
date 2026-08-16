@@ -10,12 +10,33 @@ const normalizeRecords = (data) => {
   return [];
 };
 
+// Blank source files are deliberately excluded from the selector, so an empty
+// value is a collision-free "all" option (unlike a real filename such as "all").
+const ALL_SOURCE_FILES = '';
+
+// Expenditures represent a business date, rather than an instant in a user's
+// timezone. Prefer the date portion returned by the API so an ISO timestamp
+// cannot move a record into the previous/next day in another timezone.
+const getRecordDateKey = (record) => {
+  const value = record.date ?? record.createdAt;
+  if (value === null || value === undefined || value === '') return '';
+
+  const rawValue = String(value);
+  const isoDateMatch = rawValue.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDateMatch) return isoDateMatch[1];
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+
+  return [parsed.getFullYear(), String(parsed.getMonth() + 1).padStart(2, '0'), String(parsed.getDate()).padStart(2, '0')].join('-');
+};
+
 const EscortExpenditureSummaryPage = () => {
   const [records, setRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sourceFileFilter, setSourceFileFilter] = useState('all');
+  const [sourceFileFilter, setSourceFileFilter] = useState(ALL_SOURCE_FILES);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [chartType, setChartType] = useState('pie');
@@ -36,14 +57,17 @@ const EscortExpenditureSummaryPage = () => {
     loadRecords();
   }, []);
 
-
   const sourceFileOptions = useMemo(() => {
-    return [...new Set(records.map((record) => record.sourceFile).filter(Boolean))];
+    return [...new Set(
+      records
+        .map((record) => String(record.sourceFile || '').trim())
+        .filter(Boolean),
+    )];
   }, [records]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setSourceFileFilter('all');
+    setSourceFileFilter(ALL_SOURCE_FILES);
     setDateFrom('');
     setDateTo('');
   };
@@ -93,34 +117,39 @@ const EscortExpenditureSummaryPage = () => {
 
   const filteredRecords = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
+
     return records.filter((record) => {
-      const recordDate = record.date ? new Date(record.date) : null;
-      const hasDate = recordDate && !Number.isNaN(recordDate.getTime());
-      const fromDate = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
-      const toDate = dateTo ? new Date(`${dateTo}T23:59:59`) : null;
+      const matchesSource =
+        sourceFileFilter === ALL_SOURCE_FILES ||
+        String(record.sourceFile || '').trim() === sourceFileFilter;
 
-      const inDateRange =
-        (!fromDate || (hasDate && recordDate >= fromDate)) &&
-        (!toDate || (hasDate && recordDate <= toDate));
+      if (!matchesSource) return false;
 
-      const matchesSource = sourceFileFilter === 'all' || (record.sourceFile || '') === sourceFileFilter;
+      if (dateFrom || dateTo) {
+        const recordDate = getRecordDateKey(record);
+        if (!recordDate) return false;
+        if (dateFrom && recordDate < dateFrom) return false;
+        if (dateTo && recordDate > dateTo) return false;
+      }
 
-      const haystack = [
+      if (!query) return true;
+
+      const searchableFields = [
         record.remarks,
         record.sourceFile,
-        record.date,
+        getRecordDateKey(record),
         record.totalEscort,
         record.coverVan,
         record.receivedAmount,
         record.expenditure,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+        record.client?.name,
+        record.company?.name,
+      ];
 
-      const matchesSearch = !query || haystack.includes(query);
-
-      return inDateRange && matchesSource && matchesSearch;
+      return searchableFields.some((field) => {
+        if (field === null || field === undefined) return false;
+        return String(field).toLowerCase().includes(query);
+      });
     });
   }, [records, searchTerm, sourceFileFilter, dateFrom, dateTo]);
 
@@ -129,7 +158,9 @@ const EscortExpenditureSummaryPage = () => {
       <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Falcon executive view — escort expenditure report</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Falcon executive view — escort expenditure report
+            </h2>
             <p className="mt-1 text-sm text-slate-600">
               Read-only analytical reporting workspace. Data entry and CRUD are available in Data Input Core.
             </p>
@@ -144,7 +175,9 @@ const EscortExpenditureSummaryPage = () => {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Analytical summary</h3>
-            <p className="text-sm text-slate-500">Filters instantly update KPI cards, chart trends, and underlying escort records.</p>
+            <p className="text-sm text-slate-500">
+              Filters instantly update KPI cards, chart trends, and underlying escort records.
+            </p>
           </div>
           {statusMessage ? <p className="text-sm text-emerald-600">{statusMessage}</p> : null}
         </div>
@@ -176,7 +209,7 @@ const EscortExpenditureSummaryPage = () => {
               onChange={(event) => setSourceFileFilter(event.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 outline-none"
             >
-              <option value="all">All source files</option>
+              <option value={ALL_SOURCE_FILES}>All source files</option>
               {sourceFileOptions.map((sourceFile) => (
                 <option key={sourceFile} value={sourceFile}>
                   {sourceFile}

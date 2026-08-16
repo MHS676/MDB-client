@@ -9,7 +9,8 @@ const formatCurrency = (value) =>
 
 const formatDate = (value) => {
   if (!value) return '—';
-  const date = new Date(value);
+  const dateOnly = String(value).match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+  const date = new Date(`${dateOnly || value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return '—';
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',

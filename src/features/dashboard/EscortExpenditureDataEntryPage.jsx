@@ -4,7 +4,15 @@ import ExpenditureTable from '../../components/expenditure/ExpenditureTable';
 import { expenditureAPI } from '../../services/api';
 
 const createInitialFormState = () => {
-  const today = new Date().toISOString().slice(0, 10);
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .formatToParts(new Date())
+    .reduce((parts, part) => ({ ...parts, [part.type]: part.value }), {});
+  const today = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
   return {
     date: today,
     totalEscort: '',
@@ -71,7 +79,9 @@ const EscortExpenditureDataEntryPage = () => {
 
     try {
       const payload = {
-        date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
+        // Send the date selected by the user unchanged. Converting a date-only
+        // value to an ISO instant can move it into a different calendar day.
+        date: formData.date,
         totalEscort: Number(formData.totalEscort) || 0,
         coverVan: Number(formData.coverVan) || 0,
         receivedAmount: Number(formData.receivedAmount) || 0,
@@ -102,7 +112,7 @@ const EscortExpenditureDataEntryPage = () => {
     setEditingId(record.id);
     setIsEditing(true);
     setFormData({
-      date: record.date ? new Date(record.date).toISOString().slice(0, 10) : createInitialFormState().date,
+      date: record.date ? String(record.date).slice(0, 10) : createInitialFormState().date,
       totalEscort: record.totalEscort ?? '',
       coverVan: record.coverVan ?? '',
       receivedAmount: record.receivedAmount ?? '',

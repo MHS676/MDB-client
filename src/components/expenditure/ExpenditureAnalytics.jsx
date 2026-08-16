@@ -22,7 +22,8 @@ const formatCurrency = (value) =>
 
 const formatChartLabel = (value) => {
   if (!value) return '—';
-  const date = new Date(value);
+  const dateOnly = String(value).match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+  const date = new Date(`${dateOnly || value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return '—';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -41,7 +42,7 @@ const ExpenditureAnalytics = ({ records, chartType = 'pie', onPrintChart = null 
   ];
 
   const lineData = [...records]
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .sort((a, b) => String(a.date || a.createdAt || '').localeCompare(String(b.date || b.createdAt || '')))
     .map((record) => ({
       name: formatChartLabel(record.date),
       receivedAmount: Number(record.receivedAmount || 0),
