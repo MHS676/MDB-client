@@ -135,7 +135,7 @@ const EscortExpenditureSummaryPage = () => {
             </p>
           </div>
           <div className="rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
-            Executive read-only mode
+            read-only mode
           </div>
         </div>
       </div>
