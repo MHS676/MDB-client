@@ -1,7 +1,8 @@
+import { financialRecordsAPI } from '../services/api';
+
 const handleSave = async () => {
   try {
     // 1. Gather your values safely.
-    // Replace 'recurringRevenueBilled' and 'dailyBreakdown' with the EXACT state variables you use to manage your inputs.
     const recurringMonthly = parseFloat(recurringRevenueBilled) || 0; 
     
     let totalReceivedCash = 0;
@@ -22,7 +23,7 @@ const handleSave = async () => {
 
     // 2. Build the precise payload the NestJS DTO demands
     const payload = {
-      month: selectedMonthName || "June", // Ensure this evaluates to a pure string name
+      month: selectedMonthName || "June",
       year: "2026",
       revenueBilledRecurringMonthly: recurringMonthly,
       revenueBilledReceivedCash: totalReceivedCash,
@@ -31,23 +32,12 @@ const handleSave = async () => {
       revenueBilledOutstandingBank: 0
     };
 
-    // 3. Resolve API URL cleanly from your working Vite .env configuration
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    
     console.log("Sending payload to NestJS backend:", payload);
 
-    const response = await fetch(`${API_BASE}/financial-records/save`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer mock-jwt-token-string-xyz-replace-with-real-jwt-sign'
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
+    // 3. Use the professional API service instead of hardcoded fetch
+    const result = await financialRecordsAPI.save(payload);
     
-    if (response.ok && result.success) {
+    if (result && result.success) {
       alert('✓ Financial metrics written to PostgreSQL database successfully!');
     } else {
       console.error('Backend validation rejection packet:', result);

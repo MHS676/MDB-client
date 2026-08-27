@@ -13,16 +13,14 @@ const LoginPage = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      // Simulated authentication check matching your dashboard user profile
-      if (email === 'yusuf@mdb.com' && password === 'admin123') {
-        // Store token for API calls
-        await authAPI.login(email, password);
-        onLoginSuccess({ name: 'Yusuf', email: 'yusuf@mdb.com' });
-      } else {
-        setError('Invalid enterprise credentials. Please try again.');
-      }
+      // Authenticate with the real backend
+      const response = await authAPI.login(email, password);
+      onLoginSuccess({ 
+        name: response.user?.name || email.split('@')[0], 
+        email: response.user?.email || email 
+      });
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +109,9 @@ const LoginPage = ({ onLoginSuccess }) => {
         {/* Demo Hint Footer */}
         <div className="mt-6 pt-4 border-t border-slate-700/30 text-center">
           <p className="text-[10px] text-slate-500">
-            Demo Access — Use User: <span className="text-slate-400 font-mono">yusuf@mdb.com</span> & Pass: <span className="text-slate-400 font-mono">admin123</span>
+            Test Credentials:<br />
+            Email: <span className="text-slate-400 font-mono">admin@falconsecurity.com</span><br />
+            Pass: <span className="text-slate-400 font-mono">FalconPassword123!</span>
           </p>
         </div>
       </div>

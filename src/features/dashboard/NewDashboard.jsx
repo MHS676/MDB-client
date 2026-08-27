@@ -142,11 +142,23 @@ const NewDashboard = ({ user, onSignOut }) => {
             </div>
           </div>
 
-          {/* User Profile Capsule */}
-          <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 pl-3 pr-1.5 py-1 rounded-full shadow-2xs">
-            <span className="text-xs font-bold text-slate-700">{userName}</span>
-            <div className="w-7 h-7 bg-emerald-600 text-white text-xs font-extrabold flex items-center justify-center rounded-full shadow-sm">
-              {userInitial}
+          {/* User Profile Capsule with Logout */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onSignOut}
+              className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 hover:border-red-300 rounded-lg transition-all flex items-center gap-1.5"
+              title="Logout"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
+            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 pl-3 pr-1.5 py-1 rounded-full shadow-2xs">
+              <span className="text-xs font-bold text-slate-700">{userName}</span>
+              <div className="w-7 h-7 bg-emerald-600 text-white text-xs font-extrabold flex items-center justify-center rounded-full shadow-sm">
+                {userInitial}
+              </div>
             </div>
           </div>
         </header>

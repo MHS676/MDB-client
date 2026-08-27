@@ -3,6 +3,8 @@ import LoginPage from './features/auth/LoginPage';
 import NewDashboard from './features/dashboard/NewDashboard';
 import FalconLoginPage from './features/falcon/FalconLoginPage';
 import FalconDashboard from './features/falcon/FalconDashboard';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import { authAPI } from './services/api';
 
 function App() {
   // Simple custom router path state: 'data-entry' | 'falcon-executive'
@@ -50,9 +52,9 @@ function App() {
     localStorage.setItem('dataEntryUser', JSON.stringify(user));
   };
 
-  const handleDataEntrySignOut = () => {
+  const handleDataEntrySignOut = async () => {
+    await authAPI.logout();
     setDataEntryUser(null);
-    localStorage.removeItem('dataEntryUser');
   };
 
   const handleFalconLogin = (user) => {
@@ -60,9 +62,9 @@ function App() {
     localStorage.setItem('falconUser', JSON.stringify(user));
   };
 
-  const handleFalconSignOut = () => {
+  const handleFalconSignOut = async () => {
+    await authAPI.logout();
     setFalconUser(null);
-    localStorage.removeItem('falconUser');
   };
 
   // Prevent flash content rendering while checking local storage status
@@ -75,7 +77,8 @@ function App() {
   }
 
   return (
-    <div className="relative w-screen h-screen">
+    <ErrorBoundary>
+      <div className="relative w-screen h-screen">
       
       {/* Route Switcher Toggle (Floating Admin Toolbar) */}
       <div className="absolute bottom-4 left-4 z-50 flex gap-2 bg-white/90 backdrop-blur border border-slate-200 p-1.5 rounded-xl shadow-lg select-none">
@@ -117,6 +120,7 @@ function App() {
       )}
 
     </div>
+    </ErrorBoundary>
   );
 }
 

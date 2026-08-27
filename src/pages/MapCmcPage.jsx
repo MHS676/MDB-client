@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { externalAPI } from '../services/api';
 
 // Fix Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -151,9 +152,8 @@ const MapCmcPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('http://localhost:5000/posts');
-        if (!res.ok) throw new Error(`Failed to fetch posts: ${res.status}`);
-        const data = await res.json();
+        const data = await externalAPI.getPosts();
+        if (!data) throw new Error('No data received');
 
         if (!cancelled) {
           const rawPosts = Array.isArray(data) ? data : [];
