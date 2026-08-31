@@ -5,6 +5,7 @@ import ExpenditurePage from './ExpenditurePage';
 import EscortExpenditureDataEntryPage from './EscortExpenditureDataEntryPage';
 import VatCompliancePage from './VatPage';
 import TdsCompliancePage from './TdsPage';
+import DataInputCorePage from './DataInputCorePage';
 
 const NewDashboard = ({ user, onSignOut }) => {
   // Use user context data cleanly, fallback safely if undefined
@@ -30,6 +31,12 @@ const NewDashboard = ({ user, onSignOut }) => {
   // Clean, focused navigation schema with only the required input screens
   const navigationStructure = [
     {
+      groupHeading: "Data Input",
+      items: [
+        { id: 'Data Input Core', label: 'Account Management', icon: '🔐' },
+      ]
+    },
+    {
       groupHeading: "Operations",
       items: [
         { id: 'Revenue Billed', label: 'Revenue Billed', icon: '📝' },
@@ -50,6 +57,8 @@ const NewDashboard = ({ user, onSignOut }) => {
   // Dynamic Page Switcher Map matching the clean sidebar layout
   const renderActivePage = () => {
     switch (currentPage) {
+      case 'Data Input Core':
+        return <DataInputCorePage user={user} />;
       case 'Revenue Billed':
         return <RevenueBilledPage />;
       case 'Revenue Till End':

@@ -1,25 +1,44 @@
 import React, { useState } from 'react';
+import { authAPI } from '../../services/api';
 
 const FalconLoginPage = ({ onLoginSuccess }) => {
   const [clientId, setClientId] = useState('');
   const [secretKey, setSecretKey] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Map demo credentials to real credentials
+      let email, password;
+      
       if (clientId === 'falcon-exec' && secretKey === 'falcon2026') {
-        setIsLoading(false);
-        onLoginSuccess({ name: 'Executive Director', role: 'Falcon Management' });
+        // Use the COORDINATOR account for executive access
+        email = 'admin@falconsecurity.com';
+        password = 'FalconPassword123!';
       } else {
         setIsLoading(false);
         setError('Unauthorized corporate access token key combination.');
+        return;
       }
-    }, 700);
+
+      // Authenticate with the real backend (stores JWT in localStorage)
+      const response = await authAPI.login(email, password);
+      
+      onLoginSuccess({ 
+        name: response.user?.name || 'Executive Director', 
+        role: 'Falcon Management',
+        email: response.user?.email || email
+      });
+    } catch (err) {
+      setIsLoading(false);
+      setError(err.message || 'Authentication failed. Please check your credentials.');
+    }
   };
 
   return (
@@ -54,14 +73,24 @@ const FalconLoginPage = ({ onLoginSuccess }) => {
 
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Management Secret Key</label>
-            <input
-              type="password"
-              required
-              value={secretKey}
-              onChange={(e) => setSecretKey(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-medium text-slate-200 outline-none focus:border-amber-500/60 transition-all"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={secretKey}
+                onChange={(e) => setSecretKey(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 text-xs font-medium text-slate-200 outline-none focus:border-amber-500/60 transition-all"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer text-lg"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
           </div>
 
           <button

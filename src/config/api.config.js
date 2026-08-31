@@ -5,12 +5,13 @@
  */
 
 const API_CONFIG = {
-  // Main API Base URL
+  // Main API Base URL (MDB Backend - Financial Records, Expenditures, Users)
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
 
   // Module-specific endpoints
   AUTH: {
-    BASE: import.meta.env.VITE_AUTH_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth`,
+    // Centralized Auth Server (separate from main API)
+    BASE: import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001/auth',
     LOGIN: '/login',
     LOGOUT: '/logout',
   },

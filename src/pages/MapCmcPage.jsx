@@ -198,7 +198,7 @@ const MapCmcPage = () => {
     };
   }, []);
 
-  // Dynamically extract company names OR fallback to predefined companies
+  // Dynamically extract company names from posts (no fallback to hardcoded list)
   const companies = useMemo(() => {
     const set = new Set();
     posts.forEach((p) => {
@@ -206,8 +206,8 @@ const MapCmcPage = () => {
       if (compName) set.add(compName.trim());
     });
 
-    const extracted = Array.from(set);
-    return extracted.length > 0 ? extracted : ['Falcon Security Limited', 'Robi'];
+    const extracted = Array.from(set).sort();
+    return extracted;
   }, [posts]);
 
   const filteredPosts = useMemo(() => {
