@@ -102,6 +102,12 @@ const externalApiCall = async (url, method = 'GET', data = null) => {
     'Content-Type': 'application/json',
   };
 
+  // Add JWT token from localStorage for authentication
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const options = {
     method,
     headers,
