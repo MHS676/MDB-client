@@ -178,7 +178,7 @@ export default function AttendanceDetailsPage() {
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-slate-700">
             <div>
-              <div className="text-xs text-gray-500">Zone Coordinate</div>
+              <div className="text-xs text-gray-500">Zone Coordinator</div>
               <div className="font-semibold mt-2">{selectedPost?.latitude && selectedPost?.longitude ? `${selectedPost.latitude}, ${selectedPost.longitude}` : '—'}</div>
             </div>
             <div>
