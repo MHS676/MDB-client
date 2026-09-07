@@ -10,6 +10,8 @@ export default function AttendanceDetailsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('2026-06');
   const [loading, setLoading] = useState(true);
+  const [postSummary, setPostSummary] = useState(null);
+  const [postLoading, setPostLoading] = useState(false);
 
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
@@ -31,16 +33,60 @@ export default function AttendanceDetailsPage() {
     fetchInitialData();
   }, [selectedMonth]);
 
+  // Fetch post-wise summary when a post is selected
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPostSummary = async () => {
+      if (!selectedPost) {
+        setPostSummary(null);
+        return;
+      }
+      setPostLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const url = `${ATTENDANCE_API_URL}/post-summary?postId=${encodeURIComponent(selectedPost.id)}&month=${encodeURIComponent(selectedMonth)}`;
+        let res = await fetch(url, { headers });
+        if (res.status === 401 || res.status === 403) {
+          // fallback to public endpoint if available
+          const publicUrl = `${ATTENDANCE_API_URL}/post-summary-public?postId=${encodeURIComponent(selectedPost.id)}&month=${encodeURIComponent(selectedMonth)}`;
+          res = await fetch(publicUrl);
+        }
+        if (!res.ok) throw new Error(`Failed to fetch post summary ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) setPostSummary(data);
+      } catch (err) {
+        console.error('Failed to fetch post summary', err);
+        if (!cancelled) setPostSummary(null);
+      } finally {
+        if (!cancelled) setPostLoading(false);
+      }
+    };
+
+    fetchPostSummary();
+    return () => { cancelled = true; };
+  }, [selectedPost, selectedMonth]);
+
   const fetchInitialData = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-      const [attRes, postRes] = await Promise.all([
+      const [attRes, postResRaw] = await Promise.all([
         fetch(`${ATTENDANCE_API_URL}?month=${selectedMonth}`, { headers }).catch(() => null),
         fetch(POSTS_API_URL, { headers }).catch(() => null)
       ]);
+
+      // If posts fetch is unauthorized, try public posts endpoint
+      let postRes = postResRaw;
+      if (postResRaw && (postResRaw.status === 401 || postResRaw.status === 403)) {
+        try {
+          postRes = await fetch(`${POSTS_API_URL}/public`).catch(() => null);
+        } catch (e) {
+          postRes = null;
+        }
+      }
 
       if (attRes && attRes.ok) {
         const data = await attRes.json();
@@ -64,14 +110,17 @@ export default function AttendanceDetailsPage() {
   // Autocomplete Suggestions
   const filteredPosts = useMemo(() => {
     if (!searchQuery) return [];
+    // If user selected a post and the input matches exactly, hide suggestions
+    if (selectedPost && selectedPost.name === searchQuery) return [];
     const q = searchQuery.toLowerCase();
     return posts.filter(p => (p.name || '').toLowerCase().includes(q)).slice(0, 8);
   }, [posts, searchQuery]);
 
-  // Aggregate Data for Summary Box
+  // Prefer server-provided post summary when available, otherwise fall back to logs
   const summaryByDesignation = useMemo(() => {
+    if (postSummary && postSummary.summaryByDesignation) return postSummary.summaryByDesignation;
     if (!logs.length) return null;
-    
+
     const stats = {};
     logs.forEach(log => {
       const des = log.user?.designation || log.guardProfile?.designation || 'Security Guard';
@@ -80,7 +129,6 @@ export default function AttendanceDetailsPage() {
       }
       const guardId = log.userId || log.user?.id || log.guardProfile?.id;
       if (guardId) stats[des].guardIds.add(guardId);
-      
       if (log.status === 'PRESENT') stats[des].netDuties += 1;
       stats[des].totalDuties += 1;
     });
@@ -89,28 +137,30 @@ export default function AttendanceDetailsPage() {
       ...item,
       qty: item.guardIds.size || 1
     }));
-  }, [logs]);
+  }, [logs, postSummary]);
 
-  // Dynamic Guard Duty Roster Grid
+  // Guard roster uses server guardDetails when present
   const guardRoster = useMemo(() => {
+    if (postSummary && Array.isArray(postSummary.guardDetails)) {
+      return postSummary.guardDetails.map((g) => ({
+        id: g.employeeId || g.userId || g.id,
+        name: g.name || g.user?.name || 'Guard',
+        designation: g.designation || g.user?.designation || 'Security Guard',
+        dutyCount: g.duty ?? g.dutyCount ?? 0,
+      }));
+    }
+
     if (!logs.length) return [];
-    
     const guardMap = {};
     logs.forEach(log => {
-      const id = log.user?.employeeId || log.userId?.substring(0, 4) || 'N/A';
+      const id = log.user?.employeeId || (log.userId ? log.userId.substring(0, 6) : 'N/A');
       const name = log.user?.name || log.guardProfile?.user?.name || 'Guard';
       const designation = log.user?.designation || log.guardProfile?.designation || 'Security Guard';
-      
-      if (!guardMap[id]) {
-        guardMap[id] = { id, name, designation, dutyCount: 0 };
-      }
-      if (log.status === 'PRESENT') {
-        guardMap[id].dutyCount += 1;
-      }
+      if (!guardMap[id]) guardMap[id] = { id, name, designation, dutyCount: 0 };
+      if (log.status === 'PRESENT') guardMap[id].dutyCount += 1;
     });
-
     return Object.values(guardMap);
-  }, [logs]);
+  }, [logs, postSummary]);
 
   return (
     <div className="min-h-screen bg-white px-6 py-8 sm:px-12 md:px-16 lg:px-20 text-slate-900">
@@ -179,15 +229,17 @@ export default function AttendanceDetailsPage() {
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-slate-700">
             <div>
               <div className="text-xs text-gray-500">Zone Coordinator</div>
-              <div className="font-semibold mt-2">{selectedPost?.latitude && selectedPost?.longitude ? `${selectedPost.latitude}, ${selectedPost.longitude}` : '—'}</div>
+              <div className="font-semibold mt-2">
+                {postSummary?.post?.zoneCoordinator || postSummary?.guardDetails?.find(g => g.role === 'COORDINATOR' || g.designation?.toLowerCase()?.includes('coordinator'))?.name || '—'}
+              </div>
             </div>
             <div>
               <div className="text-xs text-gray-500">Address</div>
-              <div className="font-semibold mt-2">{selectedPost?.address || '—'}</div>
+              <div className="font-semibold mt-2">{((postSummary?.post?.address ?? selectedPost?.address) || '—')}</div>
             </div>
             <div>
               <div className="text-xs text-gray-500">Duty Hours</div>
-              <div className="font-semibold mt-2">8 / 12 hrs</div>
+              <div className="font-semibold mt-2">{postSummary?.post?.dutyHours ?? '8 / 12 hrs'}</div>
             </div>
           </div>
         </div>
